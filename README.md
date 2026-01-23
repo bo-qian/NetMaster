@@ -1,5 +1,5 @@
 # NetMaster
-Shanghai University Campus Network Auto-Login Software
+上海大学校园网自动登录软件
 
 ## NetMaster  极简使用教程
 
