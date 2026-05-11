@@ -1,0 +1,15 @@
+[Unit]
+Description=NetMaster Campus Network Auto Login
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=REPLACE_PYTHON REPLACE_WORKDIR/netmaster_daemon.py
+WorkingDirectory=REPLACE_WORKDIR
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,11 @@
+{
+    "login_payload": "userId=YOUR_STUDENT_ID&password=YOUR_PASSWORD&service=shu&queryString=...",
+    "check_interval": 20,
+    "max_log_days": 7,
+    "headers": {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Origin": "http://10.10.9.9",
+        "Referer": "http://10.10.9.9/eportal/index.jsp"
+    }
+}

@@ -1,0 +1,6 @@
+# NetMaster - 忽略实际配置（含密码）和日志
+linux/daemon_config.json
+logs/
+*.token
+__pycache__/
+*.pyc
