@@ -18,7 +18,7 @@ def expand2square(pil_img, background_color=(0, 0, 0, 0)):
         return result
 
 # 1. 打开源图片
-img_source = Image.open("Debian.png").convert("RGBA")
+img_source = Image.open("net.png").convert("RGBA")
 
 # 【关键步骤】确保源图是正方形画布，防止变形
 img_square = expand2square(img_source)
@@ -42,10 +42,10 @@ for size in sizes_to_generate:
 # 3. 保存为 ICO
 # 使用 append_images 将所有帧合并
 ico_images[0].save(
-    "Debian_Ultimate.ico",
+    "net.ico",
     format='ICO',
     sizes=[img.size for img in ico_images],
     append_images=ico_images[1:]
 )
 
-print("终极版 Debian_Ultimate.ico 已生成！请检查效果。")
+print("net.ico 已生成。")
