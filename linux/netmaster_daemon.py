@@ -7,7 +7,6 @@ import time
 import json
 import signal
 import datetime
-import glob
 
 import requests
 
@@ -15,6 +14,9 @@ WORK_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(WORK_DIR, "daemon_config.json")
 STOP_TOKEN = os.path.join(WORK_DIR, "stop.token")
 LOG_DIR = os.path.join(WORK_DIR, "logs")
+LOG_FILE = os.path.join(LOG_DIR, "netmaster.log")
+MAX_LOG_SIZE = 1 * 1024 * 1024  # 1MB 自动裁剪
+KEEP_LINES = 3000
 
 LOGIN_URL = "http://10.10.9.9/eportal/InterFace.do?method=login"
 CHECK_URL = "http://connect.rom.miui.com/generate_204"
@@ -22,22 +24,25 @@ CHECK_URL = "http://connect.rom.miui.com/generate_204"
 
 def log(msg: str):
     os.makedirs(LOG_DIR, exist_ok=True)
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    line = f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {msg}"
+    ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    line = f"[{ts}] {msg}"
     try:
-        with open(os.path.join(LOG_DIR, f"{today}.log"), "a", encoding="utf-8") as f:
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(line + "\n")
     except Exception:
         pass
     print(line)
 
 
-def cleanup_logs(max_days: int):
+def rotate_log():
+    """日志文件超过 MAX_LOG_SIZE 时保留末尾 KEEP_LINES 行"""
     try:
-        now = time.time()
-        for f in glob.glob(os.path.join(LOG_DIR, "*.log")):
-            if now - os.path.getmtime(f) > max_days * 86400:
-                os.remove(f)
+        if os.path.exists(LOG_FILE) and os.path.getsize(LOG_FILE) > MAX_LOG_SIZE:
+            with open(LOG_FILE, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            if len(lines) > KEEP_LINES:
+                with open(LOG_FILE, "w", encoding="utf-8") as f:
+                    f.writelines(lines[-KEEP_LINES:])
     except Exception:
         pass
 
@@ -88,7 +93,6 @@ def main():
         cfg = json.load(f)
 
     check_interval = int(cfg.get("check_interval", 20))
-    max_log_days = int(cfg.get("max_log_days", 7))
 
     log(f"NetMaster 守护进程启动 (间隔: {check_interval}s)")
 
@@ -113,7 +117,7 @@ def main():
                 if check_internet():
                     log("网络已恢复")
             else:
-                cleanup_logs(max_log_days)
+                rotate_log()
         except Exception as e:
             log(f"Err: {e}")
 
