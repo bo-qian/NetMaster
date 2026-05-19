@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import json
+import shutil
 import subprocess
 import datetime
 
@@ -12,10 +13,12 @@ import requests
 
 WORK_DIR = os.environ.get("NETMASTER_DIR", os.path.expanduser("~/.netmaster"))
 CONFIG_PATH = os.path.join(WORK_DIR, "daemon_config.json")
+LOG_FILE = os.path.join(WORK_DIR, "logs", "netmaster.log")
 SERVICE = "netmaster.service"
 
 CHECK_URL = "http://connect.rom.miui.com/generate_204"
 LOGIN_URL = "http://10.10.9.9/eportal/InterFace.do?method=login"
+REPO_URL = "https://github.com/bo-qian/NetMaster"
 
 C_RESET = "\033[0m"
 C_BOLD = "\033[1m"
@@ -42,28 +45,113 @@ def box(text: str, color: str = C_GREEN):
 
 
 def banner():
-    W = 40  # 可视宽度（含边框）
-    top = "╔" + "═" * (W - 2) + "╗"
-    bot = "╚" + "═" * (W - 2) + "╝"
+    """NetMaster 彩色 ASCII 艺术字 banner"""
 
-    def dsp(w):  # 计算字符串的可视宽度（中文=2）
-        n = 0
-        for c in w:
-            n += 2 if '一' <= c <= '鿿' or '　' <= c <= '〿' or '＀' <= c <= '￯' else 1
-        return n
+    letters = {
+        'N': [
+            "███╗    ██╗",
+            "████╗   ██║",
+            "██╔██╗  ██║",
+            "██║╚██╗ ██║",
+            "██║ ╚██╗██║",
+            "╚═╝   ╚═══╝",
+        ],
+        'E': [
+            "███████╗ ",
+            "██╔════╝ ",
+            "█████╗   ",
+            "██╔══╝   ",
+            "███████╗ ",
+            "╚══════╝ ",
+        ],
+        'T': [
+            "████████╗",
+            "╚══██╔══╝",
+            "   ██║   ",
+            "   ██║   ",
+            "   ██║   ",
+            "   ╚═╝   ",
+        ],
+        'M': [
+            "███╗   ███╗",
+            "████╗ ████║",
+            "██╔████╔██║",
+            "██║╚██╔╝██║",
+            "██║ ╚═╝ ██║",
+            "╚═╝     ╚═╝",
+        ],
+        'A': [
+            " █████╗  ",
+            "██╔══██╗ ",
+            "███████║ ",
+            "██╔══██║ ",
+            "██║  ██║ ",
+            "╚═╝  ╚═╝ ",
+        ],
+        'S': [
+            " ██████╗ ",
+            "██╔════╝ ",
+            "╚█████╗  ",
+            " ╚═══██╗ ",
+            "██████╔╝ ",
+            "╚═════╝  ",
+        ],
+        'R': [
+            "██████╗  ",
+            "██╔══██╗ ",
+            "██████╔╝ ",
+            "██╔══██╗ ",
+            "██║  ██║ ",
+            "╚═╝  ╚═╝ ",
+        ],
+    }
 
-    def row(text):
-        pad = W - 2 - dsp(text)
-        left = pad // 2
-        right = pad - left
-        return "║" + " " * left + text + " " * right + "║"
+    name = "NETMASTER"
+    height = 6
+    gap = "  "
+    colors = [196, 202, 208, 214, 220, 226, 190, 154, 118]
 
-    print(f"{C_BOLD}{C_CYAN}")
-    print(top)
-    print(row("NetMaster Auto-Guardian"))
-    print(row("校园网自动守护 · Linux"))
-    print(bot)
-    print(C_RESET)
+    widths = {ch: len(letters[ch][0]) for ch in name}
+    total_content = sum(widths[ch] for ch in name) + len(gap) * (len(name) - 1)
+
+    # 根据终端宽度动态调整
+    term_w = shutil.get_terminal_size().columns
+    if term_w < total_content + 10:
+        # 终端太窄，显示简化版
+        print(f"{C_BOLD}{C_CYAN}")
+        print("╔" + "═" * 38 + "╗")
+        print("║        NetMaster Auto-Guardian       ║")
+        print("║        校园网自动守护 · Linux         ║")
+        print("╚" + "═" * 38 + "╝")
+        print(C_RESET)
+        return
+
+    pad_left = 3
+    pad_right = 3
+    box_inner = total_content + pad_left + pad_right
+
+    _border = f"{C_BOLD}{C_CYAN}"
+    print()
+    print(f"{_border}╔{'═' * box_inner}╗{C_RESET}")
+    print(f"{_border}║{' ' * box_inner}║{C_RESET}")
+
+    for row in range(height):
+        line = ""
+        for i, ch in enumerate(name):
+            c = colors[i]
+            line += f"\033[38;5;{c};1m{letters[ch][row]}\033[0m"
+            if i < len(name) - 1:
+                line += gap
+        print(f"{_border}║{C_RESET}{' ' * pad_left}{line}{' ' * pad_right}{_border}║{C_RESET}")
+
+    print(f"{_border}║{' ' * box_inner}║{C_RESET}")
+
+    subtitle = "Campus Network Auto-Guardian"
+    sub_pad = (box_inner - len(subtitle)) // 2
+    print(f"{_border}║{C_RESET}{' ' * sub_pad}{subtitle}{' ' * (box_inner - len(subtitle) - sub_pad)}{_border}║{C_RESET}")
+
+    print(f"{_border}╚{'═' * box_inner}╝{C_RESET}")
+    print()
 
 
 def osd():
@@ -86,13 +174,11 @@ def net_ok():
 
 
 def last_logs(n=5):
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = os.path.join(WORK_DIR, "logs", f"{today}.log")
-    if not os.path.exists(logfile):
-        return ["(暂无日志)"]
-    with open(logfile, "r") as f:
+    if not os.path.exists(LOG_FILE):
+        return []
+    with open(LOG_FILE, "r") as f:
         lines = f.readlines()
-    return [l.strip() for l in lines[-n:]] if lines else ["(暂无日志)"]
+    return [l.strip() for l in lines[-n:]] if lines else []
 
 
 def test_login():
@@ -122,33 +208,40 @@ def draw_status():
     is_running = "active (running)" in svc_text or "Active: active" in svc_text
     is_enabled = "enabled;" in svc_text
     online = net_ok()
-    logs = last_logs(4)
+    logs = last_logs(3)
+
+    # 终端宽度自适应
+    term_w = shutil.get_terminal_size().columns
+    panel_w = min(50, term_w - 4)
 
     print()
-    # 状态栏
-    bar_w = 38
-    print(f"{C_BOLD}  {'─' * bar_w}{C_RESET}")
 
-    # Service status
+    # ─── 标题行 ───
+    print(f"  {C_BOLD}{C_DIM}─── 系统状态 ───{C_RESET}")
+
+    # 辅助函数：打印一行状态
+    def status_row(icon, label, value, v_color):
+        print(f"  {icon}  {label:<8}{v_color}{value}{C_RESET}")
+
+    # 服务守护
     if is_running:
-        svc_icon = f"{C_GREEN}●{C_RESET}"
-        svc_text2 = "运行中"
+        status_row(f"{C_GREEN}●{C_RESET}", "服务守护", "运行中", f"{C_GREEN}{C_BOLD}")
     else:
-        svc_icon = f"{C_RED}●{C_RESET}"
-        svc_text2 = "未运行"
+        status_row(f"{C_RED}●{C_RESET}", "服务守护", "已停止", f"{C_RED}{C_BOLD}")
 
-    boot_icon = f"{C_GREEN}✓{C_RESET}" if is_enabled else f"{C_DIM}✗{C_RESET}"
-    boot_text = "开机自启" if is_enabled else "手动启动"
+    # 启动方式
+    if is_enabled:
+        status_row(f"{C_GREEN}⇱{C_RESET}", "启动方式", "开机自启", C_GREEN)
+    else:
+        status_row(f"{C_YELLOW}⇱{C_RESET}", "启动方式", "手动启动", C_YELLOW)
 
-    print(f"  {svc_icon} 服务状态: {C_BOLD}{svc_text2}{C_RESET}      {boot_icon} 启动方式: {boot_text}")
-
-    # Network status
+    # 网络状态
     if online:
-        print(f"  {C_GREEN}●{C_RESET} 网络状态: {C_BOLD}已联网{C_RESET}")
+        status_row(f"{C_GREEN}●{C_RESET}", "网络连接", "已联网", f"{C_GREEN}{C_BOLD}")
     else:
-        print(f"  {C_RED}●{C_RESET} 网络状态: {C_RED}已断网{C_RESET}")
+        status_row(f"{C_RED}●{C_RESET}", "网络连接", "已断网", f"{C_RED}{C_BOLD}")
 
-    # Config
+    # 登录账号
     if os.path.exists(CONFIG_PATH):
         with open(CONFIG_PATH, "r") as f:
             cfg = json.load(f)
@@ -157,17 +250,20 @@ def draw_status():
             uid = cfg["login_payload"].split("userId=")[1].split("&")[0]
         except Exception:
             pass
-        print(f"  {C_GREEN}●{C_RESET} 配置文件: 已就绪 (账号: {C_BOLD}{uid}{C_RESET})")
+        status_row(f"{C_CYAN}●{C_RESET}", "登录账号", uid, f"{C_CYAN}{C_BOLD}")
     else:
-        print(f"  {C_RED}●{C_RESET} 配置文件: 未创建")
+        status_row(f"{C_RED}●{C_RESET}", "登录账号", "未配置", C_RED)
 
-    print(f"{C_BOLD}  {'─' * bar_w}{C_RESET}")
+    print(f"  {C_DIM}{'─' * (panel_w)}{C_RESET}")
 
-    # Recent logs
-    print(f"\n  {C_DIM}最近日志:{C_RESET}")
-    for l in logs:
-        print(f"  {C_DIM}│{C_RESET} {l[:100]}")
+    # GitHub 仓库
+    print(f"  {C_DIM}仓库 {C_RESET}{C_CYAN}{REPO_URL}{C_RESET}")
 
+    # 最近日志
+    if logs:
+        print(f"\n  {C_DIM}最近日志:{C_RESET}")
+        for l in logs:
+            print(f"  {C_DIM}│{C_RESET} {l[:100]}")
     print()
 
 
@@ -217,16 +313,78 @@ def do_test():
 
 
 def do_logs():
-    print(f"\n  {C_DIM}实时日志 (Ctrl+C 退出)...{C_RESET}\n")
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = os.path.join(WORK_DIR, "logs", f"{today}.log")
-    if os.path.exists(logfile):
-        try:
-            subprocess.run(["tail", "-f", logfile])
-        except KeyboardInterrupt:
-            pass
+    log_dir = os.path.join(WORK_DIR, "logs")
+    clear()
+    print(f"{C_BOLD}{C_CYAN}")
+    print("╔" + "═" * 58 + "╗")
+    print("║              NetMaster · 日志查看器                  ║")
+    print("╚" + "═" * 58 + "╝")
+    print(C_RESET)
+
+    print(f"\n  {C_DIM}日志文件: {LOG_FILE}{C_RESET}")
+
+    if os.path.exists(LOG_FILE):
+        size = os.path.getsize(LOG_FILE)
+        with open(LOG_FILE, "r") as f:
+            all_lines = f.readlines()
+        total = len(all_lines)
+        print(f"  {C_DIM}文件大小: {size} bytes  |  总行数: {total}{C_RESET}")
+
+        # 显示最近半个月的断网/重连关键记录
+        if all_lines:
+            print(f"\n  {C_BOLD}最近日志 (最后 10 行):{C_RESET}")
+            for l in all_lines[-10:]:
+                text = l.strip()[:110]
+                # 给不同事件上色
+                if "登录成功" in text:
+                    print(f"  {C_GREEN}{text}{C_RESET}")
+                elif "断网" in text or "登录失败" in text or "登录错误" in text:
+                    print(f"  {C_RED}{text}{C_RESET}")
+                elif "网络已恢复" in text:
+                    print(f"  {C_GREEN}{text}{C_RESET}")
+                elif "守护进程启动" in text or "收到停止" in text:
+                    print(f"  {C_YELLOW}{text}{C_RESET}")
+                else:
+                    print(f"  {C_DIM}{text}{C_RESET}")
     else:
-        print("  (暂无日志文件)")
+        total = 0
+        print(f"\n  {C_YELLOW}⚠ 日志文件不存在，守护进程尚未运行{C_RESET}")
+        print(f"  {C_DIM}提示: 在主页按 [1] 启动守护进程即可开始记录{C_RESET}")
+
+    # 选项
+    if total > 0:
+        print(f"\n  {C_BOLD}可选操作:{C_RESET}")
+        print(f"  {C_GREEN}{C_BOLD}[f]{C_RESET} 实时追踪 (tail -f)  ")
+        print(f"  {C_GREEN}{C_BOLD}[a]{C_RESET} 查看全部日志 (less)  ")
+        print(f"  {C_GREEN}{C_BOLD}[g]{C_RESET} 搜索断网记录    ")
+        print(f"  {C_YELLOW}{C_BOLD}[q]{C_RESET} 返回主页")
+
+        choice = input(f"\n  {C_BOLD}>>> {C_RESET}").strip()
+
+        if choice == "f":
+            print(f"\n  {C_GREEN}▶ 实时追踪中 (Ctrl+C 退出)...{C_RESET}\n")
+            print(f"  {C_DIM}{'─' * 58}{C_RESET}")
+            try:
+                subprocess.run(["tail", "-f", LOG_FILE])
+            except KeyboardInterrupt:
+                print(f"\n  {C_DIM}已停止追踪{C_RESET}")
+        elif choice == "a":
+            subprocess.run(["less", LOG_FILE])
+        elif choice == "g":
+            keyword = input(f"\n  {C_DIM}搜索关键词 (回车=断网): {C_RESET}").strip() or "断网"
+            print(f"\n  {C_BOLD}包含 \"{keyword}\" 的记录:{C_RESET}\n")
+            count = 0
+            for l in all_lines:
+                if keyword in l:
+                    print(f"  {C_RED}{l.strip()[:110]}{C_RESET}")
+                    count += 1
+            if count == 0:
+                print(f"  {C_DIM}未找到匹配记录{C_RESET}")
+            print(f"\n  {C_DIM}共 {count} 条{C_RESET}")
+    else:
+        print()
+
+    input(f"\n  {C_DIM}按 Enter 返回主页...{C_RESET}")
 
 
 def do_capture():

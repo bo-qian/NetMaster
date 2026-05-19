@@ -64,12 +64,29 @@ systemctl --user enable netmaster.service 2>/dev/null || true
 
 # 5. 设置 alias
 echo "[5/5] 设置终端命令..."
+
+# 确保 ~/.bashrc 会加载 ~/.bashrc.d/ (并非所有发行版默认支持)
+if [ -f "$HOME/.bashrc" ]; then
+    if ! grep -q "bashrc\.d" "$HOME/.bashrc" 2>/dev/null; then
+        echo "" >> "$HOME/.bashrc"
+        echo "# Auto-added by NetMaster installer" >> "$HOME/.bashrc"
+        echo "if [ -d ~/.bashrc.d ]; then" >> "$HOME/.bashrc"
+        echo "    for rc in ~/.bashrc.d/*; do" >> "$HOME/.bashrc"
+        echo "        if [ -f \"\$rc\" ]; then" >> "$HOME/.bashrc"
+        echo "            . \"\$rc\"" >> "$HOME/.bashrc"
+        echo "        fi" >> "$HOME/.bashrc"
+        echo "    done" >> "$HOME/.bashrc"
+        echo "fi" >> "$HOME/.bashrc"
+        echo "      ✓ 已启用 ~/.bashrc.d/ 支持"
+    fi
+fi
+
 mkdir -p "$HOME/.bashrc.d"
 echo "alias netmaster='python3 $INSTALL_DIR/netmaster_tui.py'" > "$HOME/.bashrc.d/netmaster"
 
 echo ""
 echo "╔══════════════════════════════════════╗"
 echo "║  安装完成！                         ║"
+echo "║  请执行 source ~/.bashrc 后         ║"
 echo "║  输入 netmaster 打开控制面板        ║"
-echo "║  或者: source ~/.bashrc             ║"
 echo "╚══════════════════════════════════════╝"
