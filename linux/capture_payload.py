@@ -10,10 +10,16 @@ import tempfile
 import shutil
 
 import requests
-from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.common.by import By
+
+try:
+    from selenium import webdriver
+    from selenium.webdriver.firefox.service import Service
+    from selenium.webdriver.firefox.options import Options
+    from selenium.webdriver.common.by import By
+except ModuleNotFoundError:
+    print("缺少 selenium 库，请先安装：")
+    print("  pip3 install selenium")
+    sys.exit(10)
 
 WORK_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(WORK_DIR, "daemon_config.json")

@@ -389,10 +389,14 @@ def do_logs():
 
 def do_capture():
     script = os.path.join(WORK_DIR, "capture_payload.py")
-    if os.path.exists(script):
-        subprocess.run([sys.executable, script])
-    else:
+    if not os.path.exists(script):
         print(f"  {C_RED}抓包脚本不存在: {script}{C_RESET}")
+        input(f"\n  {C_DIM}按 Enter 返回...{C_RESET}")
+        return
+    ret = subprocess.run([sys.executable, script])
+    if ret.returncode == 10:
+        print(f"\n  {C_YELLOW}请手动安装 selenium 后重试:{C_RESET}")
+        print(f"  {C_BOLD}pip3 install selenium{C_RESET}")
     input(f"\n  {C_DIM}按 Enter 返回...{C_RESET}")
 
 

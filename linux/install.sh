@@ -16,6 +16,10 @@ if ! python3 -c "import requests" 2>/dev/null; then
     echo "      安装 requests..."
     pip3 install requests
 fi
+if ! python3 -c "import selenium" 2>/dev/null; then
+    echo "      安装 selenium (抓包工具依赖)..."
+    pip3 install selenium
+fi
 
 # 检查 geckodriver (抓包需要)
 if ! command -v geckodriver &>/dev/null && [ ! -f "$INSTALL_DIR/geckodriver" ]; then
