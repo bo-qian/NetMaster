@@ -47,6 +47,14 @@ netmaster                    # 打开 TUI 控制面板
 ~/.netmaster/ctl.sh start    # 启动守护
 ~/.netmaster/ctl.sh stop     # 停止守护
 ~/.netmaster/ctl.sh restart  # 重启守护
+~/.netmaster/ctl.sh logs     # 实时日志
+```
+
+## 卸载
+
+```bash
+cd NetMaster/linux
+./uninstall.sh
 ```
 
 ## 依赖
