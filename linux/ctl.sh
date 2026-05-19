@@ -24,7 +24,7 @@ case "$1" in
         systemctl --user status "$SERVICE" --no-pager
         ;;
     logs)
-        logfile="$LOG_DIR/$(date +%Y-%m-%d).log"
+        logfile="$LOG_DIR/netmaster.log"
         [ -f "$logfile" ] && tail -f "$logfile" || echo "(暂无日志)"
         ;;
     *)
