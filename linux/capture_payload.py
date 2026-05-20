@@ -6,6 +6,7 @@ import sys
 import time
 import json
 import re
+import stat
 import tempfile
 import shutil
 import unicodedata
@@ -30,6 +31,12 @@ LOGIN_URL = "http://10.10.9.9/eportal/InterFace.do?method=login"
 LOGOUT_URL = "http://10.10.9.9/eportal/InterFace.do?method=logout"
 PORTAL_URL = "http://10.10.9.9"
 
+GECKO_VERSION = "v0.36.0"
+GECKO_URL = (
+    f"https://github.com/mozilla/geckodriver/releases/download/"
+    f"{GECKO_VERSION}/geckodriver-{GECKO_VERSION}-linux64.tar.gz"
+)
+
 
 def display_width(s: str) -> int:
     """计算字符串的终端显示宽度，CJK 字符和中文标点算 2 列"""
@@ -49,6 +56,36 @@ def print_box(text: str):
         pad = width - dw - 2
         print("║  " + l + " " * pad + " ║")
     print("╚" + "═" * width + "╝")
+
+
+def ensure_geckodriver():
+    """确保 geckodriver 可用，缺失时自动下载"""
+    # 先检查系统 PATH 中的 geckodriver
+    if shutil.which("geckodriver"):
+        return shutil.which("geckodriver")
+
+    # 检查工作目录下的 geckodriver
+    if os.path.isfile(GECKODRIVER) and os.access(GECKODRIVER, os.X_OK):
+        return GECKODRIVER
+
+    # 自动下载
+    print(f"\n    geckodriver 未找到，正在自动下载 ({GECKO_VERSION})...")
+    tmp_path = "/tmp/geckodriver.tar.gz"
+    try:
+        import urllib.request
+        urllib.request.urlretrieve(GECKO_URL, tmp_path)
+        import tarfile
+        with tarfile.open(tmp_path, "r:gz") as tar:
+            tar.extract("geckodriver", path=WORK_DIR)
+        os.chmod(GECKODRIVER, os.stat(GECKODRIVER).st_mode | stat.S_IEXEC)
+        os.remove(tmp_path)
+        print(f"    ✓ geckodriver 下载完成")
+        return GECKODRIVER
+    except Exception as e:
+        print(f"    ✗ 自动下载失败: {e}")
+        print(f"    请手动下载并放到: {GECKODRIVER}")
+        print(f"    下载地址: {GECKO_URL}")
+        return None
 
 
 def main():
@@ -87,14 +124,18 @@ def main():
                 if user_id:
                     try:
                         out = requests.post(LOGOUT_URL, data=f"userId={user_id}", timeout=5)
-                        print(f"    注销结果: {out.text[:100]}")
+                        res = json.loads(out.content)
+                        msg = res.get("message", "") or out.text[:100]
+                        print(f"    注销结果: {msg}")
                     except Exception as e:
                         print(f"    注销失败: {e}")
                 else:
                     # 直接访问 logout URL
                     try:
                         out = requests.get(LOGOUT_URL, timeout=5)
-                        print(f"    注销结果: {out.text[:100]}")
+                        res = json.loads(out.content)
+                        msg = res.get("message", "") or out.text[:100]
+                        print(f"    注销结果: {msg}")
                     except Exception as e:
                         print(f"    注销失败: {e}")
 
@@ -104,16 +145,22 @@ def main():
     except Exception as e:
         print(f"    检测失败: {e}")
 
-    # 2. 启动浏览器
-    print("\n[2] 启动 Firefox...")
+    # 2. 确保 geckodriver 可用
+    gd_path = ensure_geckodriver()
+    if not gd_path:
+        print("\n❌ 无法获取 geckodriver，请检查网络后重试")
+        sys.exit(1)
+
+    # 3. 启动浏览器
+    print("\n[3] 启动 Firefox...")
     options = Options()
     # 不设 headless，让你能看到浏览器窗口
-    service = Service(executable_path=GECKODRIVER)
+    service = Service(executable_path=gd_path)
     driver = webdriver.Firefox(service=service, options=options)
 
     try:
         # 3. 导航到 portal
-        print("[3] 导航到认证页面...")
+        print("[4] 导航到认证页面...")
         driver.get(PORTAL_URL)
         time.sleep(2)
 
@@ -128,8 +175,8 @@ def main():
             time.sleep(2)
             print(f"    当前 URL: {driver.current_url}")
 
-        # 4. 注入 JS hook
-        print("[4] 注入抓包 Hook...")
+        # 5. 注入 JS hook
+        print("[5] 注入抓包 Hook...")
         js_hook = """
         if (!window._hooked) {
             window._hooked = true;
@@ -197,7 +244,7 @@ def main():
 
         if captured:
             # 6. 验证登录
-            print("\n[5] 验证凭证...")
+            print("\n[6] 验证凭证...")
             if os.path.exists(CONFIG_PATH):
                 with open(CONFIG_PATH, "r", encoding="utf-8") as f:
                     cfg = json.load(f)
@@ -231,7 +278,7 @@ def main():
 
             if verified:
                 # 7. 保存到配置
-                print("\n[6] 保存配置...")
+                print("\n[7] 保存配置...")
                 cfg["login_payload"] = captured
                 with open(CONFIG_PATH, "w", encoding="utf-8") as f:
                     json.dump(cfg, f, ensure_ascii=False, indent=2)
@@ -244,7 +291,7 @@ def main():
             print("\n❌ 未捕获到有效 payload，请重试")
 
     finally:
-        print("\n[7] 关闭浏览器...")
+        print("\n[8] 关闭浏览器...")
         try:
             driver.quit()
         except Exception:
