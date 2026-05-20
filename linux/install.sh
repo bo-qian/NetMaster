@@ -5,9 +5,29 @@ set -e
 INSTALL_DIR="$HOME/.netmaster"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-echo "╔══════════════════════════════════════╗"
-echo "║   NetMaster Linux 一键安装          ║"
-echo "╚══════════════════════════════════════╝"
+# 绘制对齐的方框（正确处理 CJK 字符显示宽度）
+print_box() {
+    python3 << 'PYEOF'
+import sys
+import unicodedata
+text = sys.stdin.read().rstrip('\n')
+if not text:
+    sys.exit(0)
+def dw(s):
+    return sum(2 if unicodedata.east_asian_width(c) in ('W','F') else 1 for c in s)
+lines = text.split('\n')
+width = max(dw(l) for l in lines) + 6
+print('╔' + '═' * width + '╗')
+for l in lines:
+    pad = width - dw(l) - 2
+    print('║  ' + l + ' ' * pad + ' ║')
+print('╚' + '═' * width + '╝')
+PYEOF
+}
+
+print_box << 'ENDOFBOX'
+NetMaster Linux 一键安装
+ENDOFBOX
 echo ""
 
 # 1. 检查依赖
@@ -16,21 +36,29 @@ if ! python3 -c "import requests" 2>/dev/null; then
     echo "      安装 requests..."
     pip3 install requests
 fi
-if ! python3 -c "import selenium" 2>/dev/null; then
-    echo "      安装 selenium (抓包工具依赖)..."
-    pip3 install selenium
-fi
 
 # 检查 geckodriver (抓包需要)
 if ! command -v geckodriver &>/dev/null && [ ! -f "$INSTALL_DIR/geckodriver" ]; then
     echo "      下载 geckodriver..."
     GECKO_URL="https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz"
+    GECKO_TMP="/tmp/geckodriver.tar.gz"
     mkdir -p "$INSTALL_DIR"
-    curl -sL "$GECKO_URL" | tar xz -C "$INSTALL_DIR"
-    chmod +x "$INSTALL_DIR/geckodriver"
+    set +e
+    curl -sL "$GECKO_URL" -o "$GECKO_TMP"
+    if [ $? -eq 0 ] && [ -f "$GECKO_TMP" ]; then
+        tar xzf "$GECKO_TMP" -C "$INSTALL_DIR" 2>/dev/null
+        chmod +x "$INSTALL_DIR/geckodriver" 2>/dev/null
+        rm -f "$GECKO_TMP"
+        echo "      ✓ geckodriver 就绪"
+    else
+        echo "      ⚠ geckodriver 下载失败，抓包功能不可用"
+    fi
+    set -e
+else
+    echo "      ✓ geckodriver 就绪"
 fi
 
-echo "      ✓ 依赖就绪"
+echo "      ✓ requests 就绪"
 
 # 2. 创建安装目录
 echo "[2/5] 创建目录..."
@@ -51,9 +79,9 @@ chmod +x "$INSTALL_DIR/ctl.sh"
 # 配置模板
 if [ ! -f "$INSTALL_DIR/daemon_config.json" ]; then
     cp "$SCRIPT_DIR/daemon_config.example.json" "$INSTALL_DIR/daemon_config.json"
-    echo "      ✓ 已创建配置模板"
+    echo "      ✓ 已创建配置模板 (需要先抓取凭证)"
 else
-    echo "      ✓ 配置文件已存在，跳过"
+    echo "      ✓ 配置文件已保留"
 fi
 
 # 4. 安装 systemd 服务
@@ -90,8 +118,9 @@ mkdir -p "$HOME/.bashrc.d"
 echo "alias netmaster='python3 $INSTALL_DIR/netmaster_tui.py'" > "$HOME/.bashrc.d/netmaster"
 
 echo ""
-echo "╔══════════════════════════════════════╗"
-echo "║  安装完成！                         ║"
-echo "║  请执行 source ~/.bashrc 后         ║"
-echo "║  输入 netmaster 打开控制面板        ║"
-echo "╚══════════════════════════════════════╝"
+print_box << 'ENDOFBOX'
+安装完成！
+输入 netmaster 打开控制面板
+ENDOFBOX
+echo ""
+source ~/.bashrc 2>/dev/null || true

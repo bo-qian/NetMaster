@@ -8,6 +8,7 @@ import json
 import re
 import tempfile
 import shutil
+import unicodedata
 
 import requests
 
@@ -25,8 +26,29 @@ WORK_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(WORK_DIR, "daemon_config.json")
 GECKODRIVER = os.path.join(WORK_DIR, "geckodriver")
 
+LOGIN_URL = "http://10.10.9.9/eportal/InterFace.do?method=login"
 LOGOUT_URL = "http://10.10.9.9/eportal/InterFace.do?method=logout"
 PORTAL_URL = "http://10.10.9.9"
+
+
+def display_width(s: str) -> int:
+    """计算字符串的终端显示宽度，CJK 字符和中文标点算 2 列"""
+    w = 0
+    for c in s:
+        w += 2 if unicodedata.east_asian_width(c) in ('W', 'F') else 1
+    return w
+
+
+def print_box(text: str):
+    """打印正确对齐的方框"""
+    lines = text.strip().split("\n")
+    width = max(display_width(l) for l in lines) + 6
+    print("╔" + "═" * width + "╗")
+    for l in lines:
+        dw = display_width(l)
+        pad = width - dw - 2
+        print("║  " + l + " " * pad + " ║")
+    print("╚" + "═" * width + "╝")
 
 
 def main():
@@ -136,13 +158,10 @@ def main():
         """
         driver.execute_script(js_hook)
 
-        print("""
-╔══════════════════════════════════════════════╗
-║  浏览器已打开，请在页面中输入账号密码登录   ║
-║  登录成功后脚本会自动捕获 POST 请求体        ║
-║  等待中...（最多 5 分钟）                    ║
-╚══════════════════════════════════════════════╝
-""")
+        print()
+        print_box("""浏览器已打开，请在页面中输入账号密码登录
+登录成功后脚本会自动捕获 POST 请求体
+等待中...（最多 5 分钟）""")
 
         # 5. 轮询抓包
         captured = None
@@ -177,26 +196,55 @@ def main():
                 time.sleep(1)
 
         if captured:
-            # 6. 保存到配置
-            print("\n[5] 保存配置...")
+            # 6. 验证登录
+            print("\n[5] 验证凭证...")
             if os.path.exists(CONFIG_PATH):
-                with open(CONFIG_PATH, "r") as f:
+                with open(CONFIG_PATH, "r", encoding="utf-8") as f:
                     cfg = json.load(f)
             else:
                 cfg = {}
 
-            cfg["login_payload"] = captured
+            headers = cfg.get("headers", {
+                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "Origin": "http://10.10.9.9",
+                "Referer": "http://10.10.9.9/eportal/index.jsp",
+            })
 
-            with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-                json.dump(cfg, f, ensure_ascii=False, indent=2)
+            verified = False
+            try:
+                resp = requests.post(LOGIN_URL, data=captured, headers=headers, timeout=10)
+                result = json.loads(resp.content)
+                if result.get("result") == "success":
+                    print(f"    ✓ 凭证有效，登录成功！")
+                    verified = True
+                else:
+                    msg = result.get("message", str(result))
+                    # 可能已经在线
+                    if "已经在线" in str(msg):
+                        print(f"    ✓ 账号已在线，凭证格式正确")
+                        verified = True
+                    else:
+                        print(f"    ✗ 登录失败: {msg}")
+            except Exception as e:
+                print(f"    ✗ 验证请求异常: {e}")
 
-            print(f"    已写入: {CONFIG_PATH}")
-            print("\n你现在可以运行: ~/.netmaster/ctl.sh start")
+            if verified:
+                # 7. 保存到配置
+                print("\n[6] 保存配置...")
+                cfg["login_payload"] = captured
+                with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+                    json.dump(cfg, f, ensure_ascii=False, indent=2)
+                print(f"    已写入: {CONFIG_PATH}")
+                print("\n你现在可以运行: netmaster")
+            else:
+                print("\n    ⚠ 凭证验证未通过，未保存到配置")
+                print("    请检查账号密码后重试抓取")
         else:
             print("\n❌ 未捕获到有效 payload，请重试")
 
     finally:
-        print("\n[6] 关闭浏览器...")
+        print("\n[7] 关闭浏览器...")
         try:
             driver.quit()
         except Exception:

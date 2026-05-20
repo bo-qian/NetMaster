@@ -8,6 +8,7 @@ import json
 import shutil
 import subprocess
 import datetime
+import unicodedata
 
 import requests
 
@@ -35,12 +36,22 @@ def clear():
     print("\033[2J\033[H", end="")
 
 
+def display_width(s: str) -> int:
+    """计算字符串的终端显示宽度，CJK 字符和中文标点算 2 列"""
+    w = 0
+    for c in s:
+        w += 2 if unicodedata.east_asian_width(c) in ('W', 'F') else 1
+    return w
+
+
 def box(text: str, color: str = C_GREEN):
     lines = text.strip().split("\n")
-    width = max(len(l) for l in lines) + 4
+    width = max(display_width(l) for l in lines) + 4
     print(f"{color}{C_BOLD}┌{'─' * width}┐")
     for l in lines:
-        print(f"│  {l}{' ' * (width - len(l) - 2)}│")
+        dw = display_width(l)
+        pad = width - dw - 2
+        print(f"│  {l}{' ' * pad}│")
     print(f"└{'─' * width}┘{C_RESET}")
 
 
@@ -114,18 +125,6 @@ def banner():
     widths = {ch: len(letters[ch][0]) for ch in name}
     total_content = sum(widths[ch] for ch in name) + len(gap) * (len(name) - 1)
 
-    # 根据终端宽度动态调整
-    term_w = shutil.get_terminal_size().columns
-    if term_w < total_content + 10:
-        # 终端太窄，显示简化版
-        print(f"{C_BOLD}{C_CYAN}")
-        print("╔" + "═" * 38 + "╗")
-        print("║        NetMaster Auto-Guardian       ║")
-        print("║        校园网自动守护 · Linux         ║")
-        print("╚" + "═" * 38 + "╝")
-        print(C_RESET)
-        return
-
     pad_left = 3
     pad_right = 3
     box_inner = total_content + pad_left + pad_right
@@ -187,12 +186,13 @@ def test_login():
     with open(CONFIG_PATH, "r") as f:
         cfg = json.load(f)
     try:
-        res = requests.post(
+        resp = requests.post(
             LOGIN_URL,
             data=cfg["login_payload"],
             headers=cfg.get("headers", {}),
             timeout=10
-        ).json()
+        )
+        res = json.loads(resp.content)
         if res.get("result") == "success":
             return "ok", "登录成功"
         msg = res.get("message", "") or str(res)
@@ -250,7 +250,10 @@ def draw_status():
             uid = cfg["login_payload"].split("userId=")[1].split("&")[0]
         except Exception:
             pass
-        status_row(f"{C_CYAN}●{C_RESET}", "登录账号", uid, f"{C_CYAN}{C_BOLD}")
+        if uid == "YOUR_STUDENT_ID" or uid == "未识别":
+            status_row(f"{C_YELLOW}⚠{C_RESET}", "登录账号", "未配置凭证 (按6抓取)", C_YELLOW)
+        else:
+            status_row(f"{C_CYAN}●{C_RESET}", "登录账号", uid, f"{C_CYAN}{C_BOLD}")
     else:
         status_row(f"{C_RED}●{C_RESET}", "登录账号", "未配置", C_RED)
 
@@ -314,28 +317,54 @@ def do_test():
 
 def do_logs():
     log_dir = os.path.join(WORK_DIR, "logs")
-    clear()
-    print(f"{C_BOLD}{C_CYAN}")
-    print("╔" + "═" * 58 + "╗")
-    print("║              NetMaster · 日志查看器                  ║")
-    print("╚" + "═" * 58 + "╝")
-    print(C_RESET)
 
-    print(f"\n  {C_DIM}日志文件: {LOG_FILE}{C_RESET}")
+    # 日志文件不存在时只显示一次提示就返回
+    if not os.path.exists(LOG_FILE):
+        clear()
+        title_text = "NetMaster · 日志查看器"
+        title_dw = display_width(title_text)
+        log_box_w = max(title_dw + 4, 50)
+        print(f"{C_BOLD}{C_CYAN}")
+        print("╔" + "═" * log_box_w + "╗")
+        left_pad = (log_box_w - title_dw) // 2
+        right_pad = log_box_w - title_dw - left_pad
+        print("║" + " " * left_pad + title_text + " " * right_pad + "║")
+        print("╚" + "═" * log_box_w + "╝")
+        print(C_RESET)
+        print(f"\n  {C_DIM}日志文件: {LOG_FILE}{C_RESET}")
+        print(f"\n  {C_YELLOW}⚠ 日志文件不存在，守护进程尚未运行{C_RESET}")
+        print(f"  {C_DIM}提示: 在主页按 [1] 启动守护进程即可开始记录{C_RESET}")
+        print()
+        input(f"\n  {C_DIM}按 Enter 返回主页...{C_RESET}")
+        return
 
-    if os.path.exists(LOG_FILE):
+    while True:
+        clear()
+        # 每次渲染时重新读取日志（tail -f / nano 可能改变内容）
         size = os.path.getsize(LOG_FILE)
         with open(LOG_FILE, "r") as f:
             all_lines = f.readlines()
         total = len(all_lines)
+
+        title_text = "NetMaster · 日志查看器"
+        title_dw = display_width(title_text)
+        log_box_w = max(title_dw + 4, 50)
+
+        print(f"{C_BOLD}{C_CYAN}")
+        print("╔" + "═" * log_box_w + "╗")
+        left_pad = (log_box_w - title_dw) // 2
+        right_pad = log_box_w - title_dw - left_pad
+        print("║" + " " * left_pad + title_text + " " * right_pad + "║")
+        print("╚" + "═" * log_box_w + "╝")
+        print(C_RESET)
+
+        print(f"\n  {C_DIM}日志文件: {LOG_FILE}{C_RESET}")
         print(f"  {C_DIM}文件大小: {size} bytes  |  总行数: {total}{C_RESET}")
 
-        # 显示最近半个月的断网/重连关键记录
         if all_lines:
             print(f"\n  {C_BOLD}最近日志 (最后 10 行):{C_RESET}")
             for l in all_lines[-10:]:
                 text = l.strip()[:110]
-                # 给不同事件上色
                 if "登录成功" in text:
                     print(f"  {C_GREEN}{text}{C_RESET}")
                 elif "断网" in text or "登录失败" in text or "登录错误" in text:
@@ -346,16 +375,11 @@ def do_logs():
                     print(f"  {C_YELLOW}{text}{C_RESET}")
                 else:
                     print(f"  {C_DIM}{text}{C_RESET}")
-    else:
-        total = 0
-        print(f"\n  {C_YELLOW}⚠ 日志文件不存在，守护进程尚未运行{C_RESET}")
-        print(f"  {C_DIM}提示: 在主页按 [1] 启动守护进程即可开始记录{C_RESET}")
 
-    # 选项
-    if total > 0:
+        # 选项菜单（循环显示，q 才退出）
         print(f"\n  {C_BOLD}可选操作:{C_RESET}")
         print(f"  {C_GREEN}{C_BOLD}[f]{C_RESET} 实时追踪 (tail -f)  ")
-        print(f"  {C_GREEN}{C_BOLD}[a]{C_RESET} 查看全部日志 (less)  ")
+        print(f"  {C_GREEN}{C_BOLD}[a]{C_RESET} 查看全部日志 (nano)  ")
         print(f"  {C_GREEN}{C_BOLD}[g]{C_RESET} 搜索断网记录    ")
         print(f"  {C_YELLOW}{C_BOLD}[q]{C_RESET} 返回主页")
 
@@ -363,13 +387,14 @@ def do_logs():
 
         if choice == "f":
             print(f"\n  {C_GREEN}▶ 实时追踪中 (Ctrl+C 退出)...{C_RESET}\n")
-            print(f"  {C_DIM}{'─' * 58}{C_RESET}")
+            print(f"  {C_DIM}{'─' * (log_box_w + 2)}{C_RESET}")
             try:
                 subprocess.run(["tail", "-f", LOG_FILE])
             except KeyboardInterrupt:
                 print(f"\n  {C_DIM}已停止追踪{C_RESET}")
+                time.sleep(0.5)
         elif choice == "a":
-            subprocess.run(["less", LOG_FILE])
+            subprocess.run(["nano", "-v", LOG_FILE])
         elif choice == "g":
             keyword = input(f"\n  {C_DIM}搜索关键词 (回车=断网): {C_RESET}").strip() or "断网"
             print(f"\n  {C_BOLD}包含 \"{keyword}\" 的记录:{C_RESET}\n")
@@ -381,22 +406,17 @@ def do_logs():
             if count == 0:
                 print(f"  {C_DIM}未找到匹配记录{C_RESET}")
             print(f"\n  {C_DIM}共 {count} 条{C_RESET}")
-    else:
-        print()
-
-    input(f"\n  {C_DIM}按 Enter 返回主页...{C_RESET}")
+            input(f"\n  {C_DIM}按 Enter 继续...{C_RESET}")
+        elif choice == "q":
+            break
 
 
 def do_capture():
     script = os.path.join(WORK_DIR, "capture_payload.py")
-    if not os.path.exists(script):
+    if os.path.exists(script):
+        subprocess.run([sys.executable, script])
+    else:
         print(f"  {C_RED}抓包脚本不存在: {script}{C_RESET}")
-        input(f"\n  {C_DIM}按 Enter 返回...{C_RESET}")
-        return
-    ret = subprocess.run([sys.executable, script])
-    if ret.returncode == 10:
-        print(f"\n  {C_YELLOW}请手动安装 selenium 后重试:{C_RESET}")
-        print(f"  {C_BOLD}pip3 install selenium{C_RESET}")
     input(f"\n  {C_DIM}按 Enter 返回...{C_RESET}")
 
 
