@@ -64,11 +64,13 @@ def do_login(cfg: dict):
             "Referer": "http://10.10.9.9/eportal/index.jsp",
         })
         payload = cfg["login_payload"]
-        res = requests.post(LOGIN_URL, data=payload, headers=headers, timeout=10).json()
+        resp = requests.post(LOGIN_URL, data=payload, headers=headers, timeout=10)
+        res = json.loads(resp.content)
         if res.get("result") == "success":
             log(">>> 登录成功")
         else:
-            log(f"登录失败: {res}")
+            msg = res.get("message", "") or str(res)
+            log(f"登录失败: {msg}")
     except Exception as e:
         log(f"登录错误: {e}")
 
