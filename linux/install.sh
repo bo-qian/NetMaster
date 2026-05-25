@@ -86,14 +86,38 @@ fi
 
 # 4. 安装 systemd 服务
 echo "[4/5] 安装 systemd 服务..."
-mkdir -p "$HOME/.config/systemd/user"
 
-# 生成适配当前路径的服务文件
-sed "s|REPLACE_PYTHON|$(which python3)|g; s|REPLACE_WORKDIR|$INSTALL_DIR|g" \
-    "$SCRIPT_DIR/netmaster.service" > "$HOME/.config/systemd/user/netmaster.service"
+# 检测 systemd user 服务是否可用
+SYSTEMD_OK=0
+if systemctl --user status >/dev/null 2>&1; then
+    SYSTEMD_OK=1
+fi
 
-systemctl --user daemon-reload
-systemctl --user enable netmaster.service 2>/dev/null || true
+if [ "$SYSTEMD_OK" = "1" ]; then
+    mkdir -p "$HOME/.config/systemd/user"
+
+    # 生成适配当前路径的服务文件
+    sed "s|REPLACE_PYTHON|$(which python3)|g; s|REPLACE_WORKDIR|$INSTALL_DIR|g" \
+        "$SCRIPT_DIR/netmaster.service" > "$HOME/.config/systemd/user/netmaster.service"
+
+    systemctl --user daemon-reload
+    systemctl --user enable netmaster.service 2>/dev/null || true
+    echo "      ✓ systemd 服务已安装并启用开机自启"
+else
+    echo "      ⚠ systemd 用户服务不可用 (D-Bus 会话总线未运行)"
+    echo ""
+    echo "      常见于 SSH 远程登录、WSL 或 Docker 环境。"
+    echo "      解决方案:"
+    echo ""
+    echo "      方法 1 — 手动设置环境变量后重试:"
+    echo "        export XDG_RUNTIME_DIR=/run/user/\$(id -u)"
+    echo "        export DBUS_SESSION_BUS_ADDRESS=unix:path=\$XDG_RUNTIME_DIR/bus"
+    echo "        ./install.sh"
+    echo ""
+    echo "      方法 2 — 手动启动守护进程:"
+    echo "        nohup python3 $INSTALL_DIR/netmaster_daemon.py &"
+    echo ""
+fi
 
 # 5. 设置 alias
 echo "[5/5] 设置终端命令..."
