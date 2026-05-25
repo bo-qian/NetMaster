@@ -153,8 +153,22 @@ def banner():
     print()
 
 
+def systemd_available():
+    """检测 systemd user 服务是否可用"""
+    try:
+        r = subprocess.run(
+            ["systemctl", "--user", "status"],
+            capture_output=True, text=True, timeout=3
+        )
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
 def osd():
     """Check service status"""
+    if not systemd_available():
+        return ""
     try:
         r = subprocess.run(
             ["systemctl", "--user", "status", SERVICE, "--no-pager"],
@@ -204,6 +218,7 @@ def test_login():
 
 
 def draw_status():
+    use_systemd = systemd_available()
     svc_text = osd()
     is_running = "active (running)" in svc_text or "Active: active" in svc_text
     is_enabled = "enabled;" in svc_text
@@ -224,13 +239,18 @@ def draw_status():
         print(f"  {icon}  {label:<8}{v_color}{value}{C_RESET}")
 
     # 服务守护
-    if is_running:
+    if not use_systemd:
+        status_row(f"{C_YELLOW}⚠{C_RESET}", "服务守护", "systemd 不可用", C_YELLOW)
+        status_row(f"{C_DIM}  {C_RESET}", "", "使用手动模式运行", C_DIM)
+    elif is_running:
         status_row(f"{C_GREEN}●{C_RESET}", "服务守护", "运行中", f"{C_GREEN}{C_BOLD}")
     else:
         status_row(f"{C_RED}●{C_RESET}", "服务守护", "已停止", f"{C_RED}{C_BOLD}")
 
     # 启动方式
-    if is_enabled:
+    if not use_systemd:
+        pass  # 已在上面显示
+    elif is_enabled:
         status_row(f"{C_GREEN}⇱{C_RESET}", "启动方式", "开机自启", C_GREEN)
     else:
         status_row(f"{C_YELLOW}⇱{C_RESET}", "启动方式", "手动启动", C_YELLOW)
@@ -289,11 +309,21 @@ def menu():
 
 
 def do_start():
+    if not systemd_available():
+        print(f"\n  {C_RED}systemd 用户服务不可用{C_RESET}")
+        print(f"  {C_DIM}请手动启动: nohup python3 {WORK_DIR}/netmaster_daemon.py &{C_RESET}")
+        time.sleep(2)
+        return
     subprocess.run(["systemctl", "--user", "start", SERVICE], capture_output=True)
     time.sleep(1)
 
 
 def do_stop():
+    if not systemd_available():
+        print(f"\n  {C_RED}systemd 用户服务不可用{C_RESET}")
+        print(f"  {C_DIM}请手动停止: 创建 ~/.netmaster/stop.token 文件{C_RESET}")
+        time.sleep(2)
+        return
     with open(os.path.join(WORK_DIR, "stop.token"), "w") as f:
         f.write("stop")
     time.sleep(2)
@@ -301,6 +331,9 @@ def do_stop():
 
 
 def do_restart():
+    if not systemd_available():
+        do_start()
+        return
     subprocess.run(["systemctl", "--user", "restart", SERVICE], capture_output=True)
     time.sleep(1)
 
