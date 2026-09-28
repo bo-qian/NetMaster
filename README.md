@@ -40,6 +40,15 @@ python main.py
 
 详见 [windows/README.md](windows/README.md)。
 
+## Star History
+
+<a href="https://www.star-history.com/?repos=bo-qian%2FNetMaster&amp;type=date&amp;legend=top-left">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=bo-qian/NetMaster&amp;type=date&amp;theme=dark&amp;legend=top-left" />
+    <img alt="NetMaster Star History" src="https://api.star-history.com/chart?repos=bo-qian/NetMaster&amp;type=date&amp;legend=top-left" />
+  </picture>
+</a>
+
 ## 开源协议
 
 本项目采用 [MIT License](LICENSE) 开源。使用、修改和分发本项目时，请保留协议中的版权声明和许可声明。
