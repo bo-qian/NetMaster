@@ -39,3 +39,7 @@ python main.py
 或直接下载 [Releases](../../releases) 中的 `NetMaster.exe`，双击运行。
 
 详见 [windows/README.md](windows/README.md)。
+
+## 开源协议
+
+本项目采用 [MIT License](LICENSE) 开源。使用、修改和分发本项目时，请保留协议中的版权声明和许可声明。
