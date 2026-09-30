@@ -78,6 +78,8 @@
 
 用户已确认有另一台 Windows 电脑，并明确要求提交 / push 后在另一台 pull。当前将业务初版、配置流程、UI 修复、测试和交接一起保存到 feature/winui3-windows；不合并 main。bin 预览输出不进入 Git，另一台拉取后需本地构建：安装 Visual Studio WinUI 工作负载与 WebView2 Runtime，打开 windows/NetMaster.WinUI/NetMaster.WinUI.slnx，将 UI 项目作为启动项目，选择 x64 / Debug，通过正常 F5 开发调试检查。如需未打包文件夹预览，在仓库根目录运行：
 
+阶段提交 adc56bd 已成功推送 origin/feature/winui3-windows；本轮再次通过 39 项 Core 测试与未打包 x64 Debug 构建（0 警告 / 错误）。以下命令用于新电脑从源码生成预览，不依赖原机器的 bin 文件。
+
 ```powershell
 $previewOut = Join-Path (Get-Location) 'windows/NetMaster.WinUI/bin/configuration-preview/'
 dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -p:WindowsPackageType=None -p:GenerateAppxPackageOnBuild=false "-p:OutDir=$previewOut" -v:minimal
