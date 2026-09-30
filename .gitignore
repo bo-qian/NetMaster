@@ -4,3 +4,9 @@ logs/
 *.token
 __pycache__/
 *.pyc
+
+# Visual Studio / WinUI build output and user settings
+.vs/
+**/bin/
+**/obj/
+*.csproj.user

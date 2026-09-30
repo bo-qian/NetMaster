@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="NetMaster.WinUI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="NetMaster">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TitleBar x:Name="AppTitleBar" Title="NetMaster" Background="Transparent" />
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="32,28,32,36" Spacing="22">
+            <StackPanel Spacing="5">
+                <TextBlock Text="NetMaster" FontSize="30" FontWeight="SemiBold" />
+                <TextBlock Text="校园网连接管理" Opacity="0.7" />
+            </StackPanel>
+
+            <InfoBar
+                IsOpen="True"
+                IsClosable="False"
+                Severity="Informational"
+                Title="新版界面预览"
+                Message="登录、自动守护和测速功能尚未接入。当前窗口用于确认布局和视觉效果。" />
+
+            <Grid ColumnSpacing="18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border
+                    Grid.Column="0"
+                    Padding="24"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <SymbolIcon Symbol="Globe" />
+                            <TextBlock Text="连接状态" FontSize="18" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <TextBlock Text="尚未检测" FontSize="28" FontWeight="SemiBold" />
+                        <TextBlock Text="接入校园网检测后，这里会显示当前连接状态和登录信息。"
+                                   TextWrapping="Wrap" Opacity="0.7" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button Content="登录校园网" IsEnabled="False" />
+                            <Button Content="重新检测" IsEnabled="False" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Grid.Column="1"
+                    Padding="24"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                    <StackPanel Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <SymbolIcon Symbol="Refresh" />
+                            <TextBlock Text="网络测速" FontSize="18" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <TextBlock Text="—" FontSize="28" FontWeight="SemiBold" />
+                        <TextBlock Text="下载、上传与延迟结果将在测速后显示。"
+                                   TextWrapping="Wrap" Opacity="0.7" />
+                        <Button Content="开始测速" IsEnabled="False" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border
+                Padding="24"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="12">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <SymbolIcon Symbol="List" />
+                        <TextBlock Text="最近日志" FontSize="18" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <TextBlock Text="暂无日志。连接守护服务后，这里会显示最近的登录和网络事件。"
+                               TextWrapping="Wrap" Opacity="0.7" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
