@@ -10,4 +10,7 @@
     <Platform Solution="*|x86" Project="x86" />
     <Deploy />
   </Project>
+  <Project Path="../NetMaster.Core/NetMaster.Core.csproj" />
+  <Project Path="../NetMaster.Worker/NetMaster.Worker.csproj" />
+  <Project Path="../NetMaster.Core.Tests/NetMaster.Core.Tests.csproj" />
 </Solution>

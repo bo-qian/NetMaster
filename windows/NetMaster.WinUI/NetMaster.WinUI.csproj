@@ -5,6 +5,7 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>NetMaster.WinUI</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\assets\branding\netmaster-icon.ico</ApplicationIcon>
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <PublishProfile>win-$(Platform).pubxml</PublishProfile>
@@ -15,6 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="Assets\NetMaster.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\Square150x150Logo.scale-200.png" />
@@ -25,8 +27,22 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../NetMaster.Core/NetMaster.Core.csproj" />
+    <ProjectReference Include="../NetMaster.Worker/NetMaster.Worker.csproj" ReferenceOutputAssembly="false" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
+  <Target Name="IncludeWorker" BeforeTargets="GetCopyToOutputDirectoryItems;_ComputeAppxPackagePayload" DependsOnTargets="ResolveProjectReferences">
+    <MSBuild Projects="../NetMaster.Worker/NetMaster.Worker.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);Platform=$(Platform);RuntimeIdentifier=$(RuntimeIdentifier)">
+      <Output TaskParameter="TargetOutputs" ItemName="WorkerPath" />
+    </MSBuild>
+    <ItemGroup>
+      <WorkerFile Include="@(WorkerPath->'%(RootDir)%(Directory)NetMaster.Worker.exe');@(WorkerPath->'%(RootDir)%(Directory)NetMaster.Worker.dll');@(WorkerPath->'%(RootDir)%(Directory)NetMaster.Worker.deps.json');@(WorkerPath->'%(RootDir)%(Directory)NetMaster.Worker.runtimeconfig.json')" />
+      <Content Include="@(WorkerFile)" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+      <!-- ResolveProjectReferences runs after AssignTargetPaths. Include the
+           worker assembly explicitly in copy and MSIX payload items. -->
+      <ContentWithTargetPath Include="@(WorkerPath)" TargetPath="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
 
   <!--
     Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
@@ -54,7 +70,7 @@
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <!-- JSON reflection and Task Scheduler COM need their full metadata. -->
+    <PublishTrimmed>False</PublishTrimmed>
   </PropertyGroup>
 </Project>

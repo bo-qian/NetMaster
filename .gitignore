@@ -10,3 +10,6 @@ __pycache__/
 **/bin/
 **/obj/
 *.csproj.user
+**/TestResults/
+*.pfx
+*.p12

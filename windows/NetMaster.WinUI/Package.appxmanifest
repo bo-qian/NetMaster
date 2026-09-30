@@ -5,8 +5,8 @@
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  xmlns:systemai="http://schemas.microsoft.com/appx/manifest/systemai/windows10"
-  IgnorableNamespaces="uap rescap systemai">
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  IgnorableNamespaces="uap rescap desktop">
 
   <Identity
     Name="4e6619dc-7548-4e3f-8cb2-537e2dba258c"
@@ -16,7 +16,7 @@
   <mp:PhoneIdentity PhoneProductId="4e6619dc-7548-4e3f-8cb2-537e2dba258c" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>NetMaster.WinUI</DisplayName>
+    <DisplayName>NetMaster</DisplayName>
     <PublisherDisplayName>qianbo</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -35,19 +35,23 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="NetMaster.WinUI"
-        Description="NetMaster.WinUI"
+        DisplayName="NetMaster"
+        Description="NetMaster 校园网助手"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
+      <Extensions>
+        <desktop:Extension Category="windows.startupTask" Executable="NetMaster.Worker.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="NetMasterGuardian" Enabled="false" DisplayName="NetMaster 后台守护" />
+        </desktop:Extension>
+      </Extensions>
     </Application>
   </Applications>
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
-    <systemai:Capability Name="systemAIModels"/>
   </Capabilities>
 </Package>

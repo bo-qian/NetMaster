@@ -1,0 +1,26 @@
+name: WinUI validation
+on:
+  push:
+    branches: [feature/winui3-windows]
+  pull_request:
+    paths: ['windows/**', 'tools/**', 'assets/branding/**', '.github/workflows/winui.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-and-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Test isolated business logic
+        run: dotnet test windows/NetMaster.Core.Tests/NetMaster.Core.Tests.csproj --logger trx -v:minimal
+      - name: Build development app without packaging
+        run: dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -p:WindowsPackageType=None -p:GenerateAppxPackageOnBuild=false -p:OutDir=${{ github.workspace }}/windows/NetMaster.WinUI/bin/ci-preview/ -v:minimal
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: business-test-results
+          path: windows/NetMaster.Core.Tests/TestResults/*.trx

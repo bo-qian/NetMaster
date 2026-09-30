@@ -1,0 +1,123 @@
+using System.Diagnostics;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Text;
+using System.Text.Json;
+
+namespace NetMaster.Core;
+
+public interface INetworkService : IDisposable
+{
+    Task<NetworkResult> DetectAsync(CancellationToken ct);
+    Task<AuthResult> LoginAsync(LoginProfile profile, CancellationToken ct);
+}
+
+public sealed class NetworkService : INetworkService
+{
+    private readonly HttpClient http;
+    private readonly Func<bool> networkAvailable;
+    public NetworkService(HttpMessageHandler? handler = null, Func<bool>? networkAvailable = null)
+    {
+        http = new(handler ?? new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(5) };
+        this.networkAvailable = networkAvailable ?? NetworkInterface.GetIsNetworkAvailable;
+    }
+    public async Task<NetworkResult> DetectAsync(CancellationToken ct)
+    {
+        if (!networkAvailable()) return Result("offline", "没有可用的网络连接");
+        bool portalRedirect = false;
+        foreach (var probe in new[] { ("http://www.msftconnecttest.com/connecttest.txt", "Microsoft Connect Test"), ("http://connect.rom.miui.com/generate_204", ""), ("https://cp.cloudflare.com/generate_204", "") })
+        {
+            try
+            {
+                using var response = await http.GetAsync(probe.Item1, HttpCompletionOption.ResponseHeadersRead, ct);
+                if (probe.Item2.Length == 0 && response.StatusCode == HttpStatusCode.NoContent || probe.Item2.Length > 0 && response.StatusCode == HttpStatusCode.OK && (await ReadBoundedAsync(response.Content, 4096, ct)).Trim() == probe.Item2) return Result("online", "互联网连接正常");
+                if ((int)response.StatusCode is >= 300 and < 400 && response.Headers.Location is { } location && new Uri(new Uri(probe.Item1), location).Host == "10.10.9.9") portalRedirect = true;
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested) { }
+            catch (HttpRequestException) { }
+            catch (InvalidDataException) { }
+        }
+        if (portalRedirect) return Result("authentication", "需要校园网认证");
+        try
+        {
+            using var response = await http.GetAsync(Protocol.Portal, HttpCompletionOption.ResponseHeadersRead, ct);
+            if (response.IsSuccessStatusCode || (int)response.StatusCode is >= 300 and < 400) return Result("authentication", "校园网可达，互联网检测未通过");
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested) { }
+        catch (HttpRequestException) { }
+        return Result("uncertain", "检测未通过，可能是网络或检测服务暂时不可用");
+    }
+    private static NetworkResult Result(string state, string text) => new(state, DateTimeOffset.Now, text);
+    public async Task<AuthResult> LoginAsync(LoginProfile profile, CancellationToken ct)
+    {
+        profile.Validate();
+        using var request = new HttpRequestMessage(HttpMethod.Post, Protocol.Login);
+        request.Content = new StringContent(profile.Payload, Encoding.UTF8, "application/x-www-form-urlencoded");
+        request.Headers.TryAddWithoutValidation("Origin", Protocol.Portal);
+        request.Headers.Referrer = new Uri(Protocol.Portal + "/eportal/index.jsp");
+        try
+        {
+            using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            if (!response.IsSuccessStatusCode) return new("unavailable", "校园网认证服务暂时不可用。");
+            return ParseAuthentication(await ReadBoundedAsync(response.Content, 131072, ct));
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested) { return new("unavailable", "认证请求超时，请稍后重试。"); }
+        catch (HttpRequestException) { return new("unavailable", "无法连接校园网认证服务，请确认已连接校园网。"); }
+        catch (InvalidDataException) { return new("unavailable", "认证响应异常，请重新打开认证网页。"); }
+    }
+    public static AuthResult ParseAuthentication(string body)
+    {
+        try
+        {
+            using var json = JsonDocument.Parse(body);
+            var root = json.RootElement;
+            if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("result", out var r) || r.ValueKind != JsonValueKind.String)
+                return new("unavailable", "未收到有效认证结果，请通过网页确认登录状态。");
+            var result = r.GetString();
+            var message = root.TryGetProperty("message", out var m) && m.ValueKind == JsonValueKind.String ? m.GetString() ?? "" : "";
+            if (result == "success") return new("success", "校园网认证成功。");
+            if (result != "fail" && result != "failed" && result != "failure") return new("unavailable", "未收到有效认证结果，请通过网页确认登录状态。");
+            if (message.Contains("已经在线") || message.Contains("已在线")) return new("alreadyOnline", "账号已在线；这次响应无法确认登录信息能否用于独立重连。");
+            return new("rejected", "学校拒绝了认证，请在网页确认账号、密码及服务选项后重新登录。");
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException) { return new("unavailable", "未收到有效认证结果，请通过网页确认登录状态。"); }
+    }
+    public static async Task<string> ReadBoundedAsync(HttpContent content, int limit, CancellationToken ct)
+    {
+        using var stream = await content.ReadAsStreamAsync(ct); using var buffer = new MemoryStream(); var bytes = new byte[8192]; int count;
+        while ((count = await stream.ReadAsync(bytes, ct)) > 0) { if (buffer.Length + count > limit) throw new InvalidDataException("响应过大"); buffer.Write(bytes, 0, count); }
+        return Encoding.UTF8.GetString(buffer.ToArray());
+    }
+    public void Dispose() => http.Dispose();
+}
+
+public sealed record SpeedResult(double? DownloadMbps, double? UploadMbps, double? LatencyMs, string Message);
+public sealed class SpeedService(Func<HttpMessageHandler>? handlerFactory = null)
+{
+    public async Task<SpeedResult> RunAsync(IProgress<string> progress, CancellationToken ct)
+    {
+        using var http = new HttpClient(handlerFactory?.Invoke() ?? new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(30) };
+        double? latency = null, download = null, upload = null;
+        try
+        {
+            progress.Report("正在测量 HTTP 延迟…"); var times = new List<double>();
+            for (int i = 0; i < 4; i++) { var clock = Stopwatch.StartNew(); using var r = await http.GetAsync("https://speed.cloudflare.com/__down?bytes=0", ct); r.EnsureSuccessStatusCode(); if (i > 0) times.Add(clock.Elapsed.TotalMilliseconds); }
+            latency = times.Order().ElementAt(1);
+            progress.Report("正在测量下载（最多 20 MB）…");
+            var watch = Stopwatch.StartNew(); long received = 0;
+            using (var r = await http.GetAsync("https://speed.cloudflare.com/__down?bytes=20000000", HttpCompletionOption.ResponseHeadersRead, ct))
+            {
+                r.EnsureSuccessStatusCode(); using var s = await r.Content.ReadAsStreamAsync(ct); var b = new byte[65536]; int n;
+                while ((n = await s.ReadAsync(b, ct)) > 0) { received += n; if (received > 20000000) throw new InvalidDataException(); }
+            }
+            if (received != 20000000) throw new InvalidDataException();
+            download = received * 8 / watch.Elapsed.TotalSeconds / 1_000_000;
+            progress.Report("正在测量上传（5 MB）…"); var bytes = new byte[5_000_000]; System.Security.Cryptography.RandomNumberGenerator.Fill(bytes); watch.Restart();
+            using (var body = new ByteArrayContent(bytes)) using (var r = await http.PostAsync("https://speed.cloudflare.com/__up", body, ct)) r.EnsureSuccessStatusCode();
+            upload = bytes.Length * 8 / watch.Elapsed.TotalSeconds / 1_000_000;
+            return new(download, upload, latency, $"{DateTime.Now:HH:mm:ss} · Cloudflare · 延迟为 HTTP 请求耗时；结果受线路与测试大小影响。");
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { return new(download, upload, latency, "测速已取消。"); }
+        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or InvalidDataException) { return new(download, upload, latency, "测速服务未完成请求，已保留取得的结果；可稍后重试。"); }
+    }
+}
