@@ -47,6 +47,25 @@
     </ItemGroup>
   </Target>
 
+  <!-- Package signing authenticates the container. Sign our executable code
+       separately for local development, before MSIX creates its integrity catalog.
+       These properties are supplied only by Build-DevelopmentPackage.ps1. -->
+  <Target Name="SignLocalDevelopmentBinaries" AfterTargets="_ComputeAppxPackagePayload"
+          Condition="'$(NetMasterDevelopmentCertificateThumbprint)' != ''">
+    <Error Condition="!Exists('$(NetMasterDevelopmentSignTool)')" Text="The development signing tool was not found." />
+    <ItemGroup>
+      <!-- Sign the canonical files chosen by MSIX after it deduplicates obj/bin
+           inputs. Signing only bin earlier makes identical inputs diverge. -->
+      <NetMasterDevelopmentBinary Include="@(AppxPackagePayload)"
+          Condition="'%(TargetPath)' == 'NetMaster.WinUI.exe' Or '%(TargetPath)' == 'NetMaster.WinUI.dll' Or '%(TargetPath)' == 'NetMaster.Worker.exe' Or '%(TargetPath)' == 'NetMaster.Worker.dll' Or '%(TargetPath)' == 'NetMaster.Core.dll'" />
+    </ItemGroup>
+    <Error Condition="'@(NetMasterDevelopmentBinary->Count())' != '5'" Text="Expected all five NetMaster executable binaries in the development payload; found @(NetMasterDevelopmentBinary->'%(TargetPath)')." />
+    <Error Condition="!Exists('%(NetMasterDevelopmentBinary.Identity)')" Text="Missing development binary: %(NetMasterDevelopmentBinary.Identity)" />
+    <Exec Command="&quot;$(NetMasterDevelopmentSignTool)&quot; sign /fd SHA256 /sha1 $(NetMasterDevelopmentCertificateThumbprint) &quot;%(NetMasterDevelopmentBinary.FullPath)&quot;" />
+    <Exec Command="&quot;$(NetMasterDevelopmentSignTool)&quot; verify /pa &quot;%(NetMasterDevelopmentBinary.FullPath)&quot;" />
+    <Copy SourceFiles="@(NetMasterDevelopmentBinary)" DestinationFiles="@(NetMasterDevelopmentBinary->'$(OutDir)%(TargetPath)')" SkipUnchangedFiles="true" />
+  </Target>
+
   <!--
     Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
     Tools extension to be activated for this project even if the Windows App SDK Nuget

@@ -2,11 +2,15 @@
 
 最后更新：2026-10-01（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
 
-**当前本机预览（覆盖后面的历史版本说明）：** 已恢复到开发包 `NetMaster.LocalDevelopment 1.0.0.34`，使用此前实际运行正常的 1.0.0.29 程序文件重新封装。安装 Status=Ok，实际概览显示“已连接互联网 / 守护运行中”，Worker 进程正常运行、已保存配置和后台日志可读取。桌面“NetMaster 开发测试”入口仍有效，图标路径已同步。该恢复包暂不包含 1.0.0.30 的设置横排 / 关于入口，也不包含本轮配置失败恢复修复；这些源码保留在开发分支，不应误认为已部署。
+**当前本机预览（覆盖后面的历史版本说明）：** `NetMaster.LocalDevelopment 1.0.0.36` 已安装并实际运行。它包含最新 WinUI（设置三个按钮横排、关于 NetMaster 的仓库 / Issues 入口、后台连接失败时的配置保护），与 1.0.0.29 起源码未改变且此前现场运行正常的 Core / Worker 二进制组合。实际概览显示“已连接互联网 / 守护运行中”，Worker 进程在运行，配置页读取到原有已保存状态；设置横排、关于展开和仓库入口均已实际查看。桌面“NetMaster 开发测试”入口图标同步到当前包。未现场点击重新配置、下线、清除数据或保存设置。
 
-1.0.0.30 的 Worker.dll 被 CodeIntegrity 3077 / VerifiedAndReputableDesktop 拦截，.NET 报 0x800711C7；安装包和 CodeIntegrity.cat 验签通过也不能保证该自签名版本被本机运行策略接受。未确定为何此前 Worker 被接受而本次被拒绝。尝试标准 FullTrustProcessLauncher 启动得到 0x80010117，实验代码已撤回；没有更改 Windows 安全策略或证书信任，没有清除用户配置。后续更新必须实际验证 UI 与 Worker 通信，不能仅凭构建 / 签名 / 安装成功覆盖可用预览。
+**根因与修复边界：** 设置页改动本身未修改 Core / Worker 源码，但常规 MSIX 构建重新生成了这些二进制文件。1.0.0.30 新 Worker.dll 被 Smart App Control 策略（CodeIntegrity 3077）拒绝，1.0.0.35 即使给五个 EXE / DLL 单独自签名仍拒绝新 Core.dll；3089 事件显示自签名证书、`ValidatedSigningLevel=1`、`VerificationError=18`（当前策略不接受该签名）。MSIX 安装成功和 `signtool` 验签成功不能代替运行策略通过。为何旧文件被允许属于该设备的信誉判定，无法从事件确定；不要宣称自签名可以普遍通过 Smart App Control。参考 [Microsoft SAC 签名说明](https://learn.microsoft.com/en-us/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control) 与 [事件字段说明](https://learn.microsoft.com/en-us/windows/security/application-security/application-control/app-control-for-business/operations/event-tag-explanations)。
 
-本轮源码修复：开始配置先读取后台状态，未确认时不进入清除旧凭证步骤；无快照时解除 busy 也重新刷新配置按钮，避免失败后卡死；后台错误提示增加错误码。x64 WinUI 构建 0 警告 / 0 错误，75 项 Core 测试通过；新修复源码尚未通过本机安装后的实际运行验收。下一步在保留当前可用预览的前提下解决更新版本的运行信任与验证流程，再部署设置 / 关于和这两处修复。
+本机 UI 单独迭代时，可在 Core / Worker 源码与已验证基线相同的前提下运行：`pwsh -NoProfile -File tools/Build-DevelopmentPackage.ps1 -ReuseBackendFrom windows/NetMaster.WinUI/bin/local-development/layout-d5ca6e974b14466ebd5867fe5a944865 -BackendSourceCommit 2f6f5ed`。脚本核查提交版和未提交的后台源码均未变化，验证旧二进制原目录的签名目录，再替换构建产物中的后台文件，重建并签署开发包完整性目录；若后台源码变动则直接拒绝复用。此本机目录在 `bin/` 内不进 Git；跨电脑需使用其本机实际验证的后台布局。脚本已成功生成版本 1.0.0.37，Core / UI 哈希与实际运行的 1.0.0.36 一致、签名和目录成员验证通过；1.0.0.37 未安装，实际运行证据属于 1.0.0.36。未来真实后台改动仍需符合运行策略的签名发布路线，并在每次更新后分别验证 UI 与 Worker 通信。
+
+1.0.0.30 的 Worker.dll 被 CodeIntegrity 3077 / VerifiedAndReputableDesktop 拦截，.NET 报 0x800711C7；安装包和 CodeIntegrity.cat 验签通过也不能保证该自签名版本被本机运行策略接受。尝试标准 FullTrustProcessLauncher 启动得到 0x80010117，实验代码已撤回；没有更改 Windows 安全策略或证书信任，没有清除用户配置。后续更新必须实际验证 UI 与 Worker 通信，不能仅凭构建 / 签名 / 安装成功覆盖可用预览。
+
+上轮源码修复：开始配置先读取后台状态，未确认时不进入清除旧凭证步骤；无快照时解除 busy 也重新刷新配置按钮，避免失败后卡死；后台错误提示增加错误码。x64 WinUI 构建 0 警告 / 0 错误，75 项 Core 测试通过；该代码现已随 1.0.0.36 安装，但失败分支尚未现场触发。下一步继续真实配置 / 断网重连验收，后台逻辑变化时不能复用旧后台组件。
 
 ## 仓库与工作分支
 
