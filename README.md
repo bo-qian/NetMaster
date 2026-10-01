@@ -1,44 +1,24 @@
-# NetMaster：上海大学校园网自动登录软件
+# NetMaster
 
-全自动管理 SHU 校园网登录，实现断网自动重连及开机自启，配置完成后即可后台静默运行。
+上海大学校园网连接管理工具。Windows 版正在从 Python 旧版迁移到 WinUI 3；Linux 版继续保留。
 
-## 功能特性
+Windows WinUI 版提供校园网登录信息配置、断线自动恢复、登录后启动、网络测速和日志查看。联网状态与后台守护状态分别显示；配置仅保存在当前 Windows 用户的数据目录中。
 
-- **断网自动重连** — 每 20 秒检测网络状态，断网立即自动登录
-- **开机自启** — Linux systemd 守护 / Windows 任务计划，无需手动干预
-- **加密凭证存储** — 不存明文密码，抓取浏览器加密后的 POST 请求体
-- **统一日志文件** — 所有记录写入单一 `netmaster.log`，带完整时间戳，支持关键词搜索回溯断网历史
+## 项目结构
 
-## 版本
+| 目录 | 内容 | 状态 |
+| --- | --- | --- |
+| [`windows/`](windows/README.md) | WinUI 3 应用、独立守护进程、业务代码及测试 | Windows 后续发布主线；正式版尚未发布 |
+| [`windows/legacy/`](windows/legacy/README.md) | Python + PySide6 旧版 Windows 源码与说明 | 保留供旧用户和源码参考，不再作为新版构建入口 |
+| [`linux/`](linux/README.md) | systemd 守护与 TUI | 独立维护 |
 
-| 平台    | 目录         | 说明                        |
-|---------|-------------|-----------------------------|
-| Linux   | `linux/`    | systemd 守护 + TUI 终端面板 |
-| Windows | `windows/`  | 任务计划 + PySide6 GUI      |
+WinUI 版与旧 Windows 版使用独立的数据目录，不会自动导入旧版配置。后续正式版计划通过 Microsoft Store 分发；仓库现有的历史 Release 若包含 `NetMaster.exe`，它属于 Python 旧版。正式版尚在验收，发布计划见[说明](docs/winui-release.md)。
 
-## Linux 版快速开始
+## 从源码运行
 
-```bash
-cd linux && ./install.sh
-```
-
-然后打开新终端输入 `netmaster`，按 `[6]` 抓取凭证，按 `[1]` 启动守护。
-
-> 建议终端宽度 ≥ 111 列以显示完整 banner，窄屏会自动降级为精简版。
-
-详见 [linux/README.md](linux/README.md)。
-
-## Windows 版快速开始
-
-```bash
-cd windows
-pip install -r requirements.txt
-python main.py
-```
-
-或直接下载 [Releases](../../releases) 中的 `NetMaster.exe`，双击运行。
-
-详见 [windows/README.md](windows/README.md)。
+- **Windows WinUI 开发版：**参见 [windows/README.md](windows/README.md)。需要 Windows、Visual Studio 的 WinUI 工作负载及 WebView2 Runtime。
+- **Windows Python 旧版：**参见 [windows/legacy/README.md](windows/legacy/README.md)。
+- **Linux：**参见 [linux/README.md](linux/README.md)。
 
 ## Star History
 

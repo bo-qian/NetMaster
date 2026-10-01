@@ -53,7 +53,7 @@ public sealed class NetworkService : INetworkService
         using var request = new HttpRequestMessage(HttpMethod.Post, Protocol.Login);
         request.Content = new StringContent(profile.Payload, Encoding.UTF8, "application/x-www-form-urlencoded");
         // The school's interface returns an empty body without the browser
-        // User-Agent used by windows/main.py, even for parameter errors.
+        // User-Agent used by windows/legacy/main.py, even for parameter errors.
         request.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0");
         request.Content.Headers.ContentType!.CharSet = "UTF-8";
         request.Headers.TryAddWithoutValidation("Origin", Protocol.Portal);
@@ -71,7 +71,7 @@ public sealed class NetworkService : INetworkService
     public async Task<AuthResult> LogoutAsync(string account, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(account) || account.Length > 128 || account.Any(char.IsControl)) throw new InvalidDataException("未获取到当前在线账号。");
-        // Match windows/main.py: POST the displayed userId directly, without
+        // Match windows/legacy/main.py: POST the displayed userId directly, without
         // relying on page JavaScript globals or a browser session userIndex.
         using var request = new HttpRequestMessage(HttpMethod.Post, Protocol.Logout)
         { Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["userId"] = account }) };

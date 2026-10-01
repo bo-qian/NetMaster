@@ -53,7 +53,7 @@
 
 ## 代码与验证
 
-- 旧版代码：`windows/main.py`；WinUI 新版：`windows/NetMaster.WinUI/`。新功能在新版项目内逐步接入，避免无关的大规模重写。
+- 旧版代码与说明：`windows/legacy/`；WinUI 新版：`windows/NetMaster.WinUI/`、`windows/NetMaster.Worker/` 和 `windows/NetMaster.Core/`。新功能在新版项目内逐步接入，避免无关的大规模重写。
 - 当前项目目标是 `.NET 8`，Windows App SDK 引用以 `.csproj` 实际值为准。不要因为开发机器装了更新 SDK 就擅自升级目标框架或依赖。
 - 开发工具：Windows、Visual Studio 2026 的 WinUI 应用程序开发工作负载、WebView2 Runtime。WinUI 应在 Windows 环境编译和运行。
 - 修改 XAML / C# 后至少执行一次相关构建；涉及界面、标题栏或登录行为时做针对性的实际运行验证。只报告已执行的验证。

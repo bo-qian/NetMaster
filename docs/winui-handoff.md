@@ -2,6 +2,10 @@
 
 最后更新：2026-10-01（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
 
+**仓库目录（本轮整理）：** `windows/` 现在是 WinUI 发布主线入口，包含 `NetMaster.WinUI/`、`NetMaster.Worker/`、`NetMaster.Core/` 和测试；原 Python Windows 版的六个文件已整体移到 `windows/legacy/`，其 README 单独保留。根 README 与 `windows/README.md` 已改为主线介绍，历史 Release 的 `NetMaster.exe` 标为 Python 旧版；Linux 目录不变。WinUI 与旧版仍使用独立数据，目录整理没有安装、升级或迁移用户配置。WinUI x64 构建、Core 75 项及网页脚本 11 项通过，旧版 Python 因此机无 Python 解释器未做启动测试。`docs/dev-log.md` 的历史记录保留原路径作为当时事实，不批量改写。
+
+**发布讨论（尚未发布）：** 用户认为软件基本接近上线，要求先说明方案。拟以 Microsoft Store 的 MSIX 为首发安装与更新渠道；GitHub Release 放版本说明和商店安装入口，免费上架后可核对 Store Web Installer。仓库生成的未签名 MSIX / msixupload 不作为站外安装包；若以后要提供离线直装 MSIX，须另行解决可信签名与更新。提交前仍需用户明确验收、真实校园网断线恢复 / 登录后自启 / 关闭窗口守护 / 升级卸载现场验证，以及解决新构建后台组件在本机 Smart App Control 下的运行验证。用户注册 Partner Center 个人账号与身份核验在正式提交前办理；当前只讨论，未打包、注册或提交。详见 [发布说明](winui-release.md)。
+
 **当前本机预览（覆盖后面的历史版本说明）：** `NetMaster.LocalDevelopment 1.0.0.37` 已安装并实际运行。它包含最新 WinUI（设置三个按钮横排、关于 NetMaster 的仓库 / Issues 入口、后台连接失败时的配置保护），与 1.0.0.29 起源码未改变且此前现场运行正常的 Core / Worker 二进制组合。实际概览显示“已连接互联网 / 守护运行中”，配置页在 1.0.0.36 读到原有已保存状态，1.0.0.37 未重复点开配置页。设置对话框现按可用窗口尺寸固定宽高；展开“关于”前后边界不移动，内容可以独立滚动，滚动条一侧预留 20 DIP 空白。桌面“NetMaster 开发测试”入口图标同步到当前包。未现场点击重新配置、下线、清除数据或保存设置。
 
 **根因与修复边界：** 设置页改动本身未修改 Core / Worker 源码，但常规 MSIX 构建重新生成了这些二进制文件。1.0.0.30 新 Worker.dll 被 Smart App Control 策略（CodeIntegrity 3077）拒绝，1.0.0.35 即使给五个 EXE / DLL 单独自签名仍拒绝新 Core.dll；3089 事件显示自签名证书、`ValidatedSigningLevel=1`、`VerificationError=18`（当前策略不接受该签名）。MSIX 安装成功和 `signtool` 验签成功不能代替运行策略通过。为何旧文件被允许属于该设备的信誉判定，无法从事件确定；不要宣称自签名可以普遍通过 Smart App Control。参考 [Microsoft SAC 签名说明](https://learn.microsoft.com/en-us/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control) 与 [事件字段说明](https://learn.microsoft.com/en-us/windows/security/application-security/application-control/app-control-for-business/operations/event-tag-explanations)。
@@ -17,7 +21,7 @@
 - 仓库：<https://github.com/bo-qian/NetMaster>
 - 开发分支：`feature/winui3-windows`，完成调试后再决定合并 `main`。
 - 当前机器路径：`D:\projects\NetMaster`。其他电脑可以使用自己的目录，不依赖这个绝对路径。
-- 旧版 Windows 程序：`windows/main.py`（Python + PySide6 + Selenium + requests，Nuitka 打包）。
+- 旧版 Windows 程序与说明：`windows/legacy/`（Python + PySide6 + Selenium + requests，Nuitka 打包）。
 - 新版解决方案：`windows/NetMaster.WinUI/NetMaster.WinUI.slnx`。
 
 ## 当前实际完成状态
@@ -58,7 +62,7 @@
 
 ## 旧版需要保留的功能
 
-从 `windows/main.py` 实际代码核对：
+从 `windows/legacy/main.py` 实际代码核对：
 
 - 打开 Edge、捕获校园网登录 POST 请求体，提取账号。
 - 验证当前登录配置（调用校园网认证接口），区分成功、已在线和服务器拒绝。
@@ -160,7 +164,7 @@
 - 最新 UI / Core / Worker 安装文件与 save-task-fix 构建 SHA256 一致。实际运行确认概览联网 / 未配置、配置首页正常，当前窗口留在配置首页。尚未代用户重新认证、输入凭证或执行实际保存。
 - 下一步：使用桌面“NetMaster 开发测试”完成开始配置 → 重新认证 / 登录 → 保存并启用守护，检查“已配置”、概览守护及重新打开后的配置保留，再进行实际断网重连。未保存的候选仅在内存，更新应用后需重新捕获。不要把回归测试当作真实学校凭证已保存。
 
-**最新下线实现（覆盖下方 1.0.0.2 的会话方案）：** 用户实测“无可用在线会话”，说明上一版从网页取 userIndex 的前置条件未成立，请求没有发出。本次按 windows/main.py 的真实方式改为：从学校在线网页读取显示的当前账号，优先明确用户名标签、兼容 Python 数字账号提取；NetworkService.LogoutAsync 由 C# 直接向固定 http://10.10.9.9/eportal/InterFace.do?method=logout POST userId，不依赖网页全局函数、userIndex 或浏览器 Cookie。PortalLogout.js 与消息等待已删除，新增只读 PortalAccount.js；界面显示脱敏“当前网页账号”便于核对是否读取成功。只有有效成功回执才显示确认下线，其余提示实际错误并刷新网页，不用联网状态冒充凭证认证。
+**最新下线实现（覆盖下方 1.0.0.2 的会话方案）：** 用户实测“无可用在线会话”，说明上一版从网页取 userIndex 的前置条件未成立，请求没有发出。本次按 windows/legacy/main.py 的真实方式改为：从学校在线网页读取显示的当前账号，优先明确用户名标签、兼容 Python 数字账号提取；NetworkService.LogoutAsync 由 C# 直接向固定 http://10.10.9.9/eportal/InterFace.do?method=logout POST userId，不依赖网页全局函数、userIndex 或浏览器 Cookie。PortalLogout.js 与消息等待已删除，新增只读 PortalAccount.js；界面显示脱敏“当前网页账号”便于核对是否读取成功。只有有效成功回执才显示确认下线，其余提示实际错误并刷新网页，不用联网状态冒充凭证认证。
 
 - 本轮最终 53 项 Core 测试通过（含固定地址 / POST / 编码 / 无 Cookie 的 Python 下线契约及异常响应），8 项 Node 捕获 / 账号提取测试通过。首次测试被 SAC 拦截新编译 Core.dll，使用同一已信任开发证书正常签名测试输出后，--no-build 全部通过；未关闭保护、未改证书信任或源码。真实下线 / 登录仍待用户操作，测试不会提交实际学校认证。
 - 实际页面适配：学校外层 success.jsp 动态嵌入在线子页面，首次 1.0.0.3 运行只读外层仍未显示账号，因此继续修复并跟踪 CoreWebView2Frame（含嵌套创建 / 销毁），在各框架内执行只读账号提取，后台 UI 刷新周期重读以兼容异步填充。学校已有 80 / 8080 页面；账号读取 / 捕获来源只允许该 IP 的这两个 HTTP 端口，其余端口仍拒绝，POST 登录仍限制确切 eportal 接口。重放登录 / 下线沿用 Python 的固定 80 端口接口。
@@ -313,7 +317,7 @@ dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -v:m
 
 ### 实际旧版流程与迁移边界
 
-- `windows/main.py` 同时包含 GUI 与 `--daemon` 两种模式。GUI 用 Selenium / Edge 抓取 POST、测试配置、写明文 `daemon_config.json`、注册 / 启动任务；daemon 独立读取配置并检测网络、断网重放登录请求、按天写日志。新版业务迁移到 C#，原 Python / Linux 保留。
+- `windows/legacy/main.py` 同时包含 GUI 与 `--daemon` 两种模式。GUI 用 Selenium / Edge 抓取 POST、测试配置、写明文 `daemon_config.json`、注册 / 启动任务；daemon 独立读取配置并检测网络、断网重放登录请求、按天写日志。新版业务迁移到 C#，原 Python / Linux 保留。
 - 认证页为 `http://10.10.9.9`，登录接口为 `/eportal/InterFace.do?method=login`；旧版处理 `result=success` 与消息中的“已经在线”。这些来自代码，当前服务器行为尚未实测。
 - 旧版单一 204 探针失效就判断网、任务 Running 就显示正常守护；新版应分别记录互联网可用性、认证结果和后台健康状态。
 - 旧版捕获所有 POST 后按字段猜测，捕获阶段可能自动注销已在线账号，且会结束所有 Edge 进程。新版仅处理指定认证来源 / 接口 / 方法，打开网页不会主动注销，不影响用户其他浏览器进程。
