@@ -380,3 +380,9 @@
 - 自动验证：75 项 Core 测试通过，新增覆盖配置测试日志来源、测试不保存、测试消息和候选状态保持；x64 Debug WinUI 构建通过。此前测速 Node 11 项沿用证据。
 - 实际运行 / 部署：正常关闭旧窗口并更新独立开发 MSIX 1.0.0.26，签名 Valid、安装 Ok，UI / Core / Worker DLL SHA256 匹配。深色实际看到绿色“已连接互联网”勾选、黄色“已暂停”提示和警告筛选中的黄色图标 / 粗体；配置页看到绿色“配置已完成”；设置内预览浅色后取消，视觉恢复原设置。未提交真实校园网测试请求，未更改用户配置；旧历史日志仍保留原事件文字，新事件使用新语义。
 - 接续：本机开发预览已更新，提交前继续检查高对比度、DPI、辅助技术和真实配置测试回执；不能把本轮自动测试当作实际校园网认证验收。
+### 2026-10-01 · 精简状态视觉并增强浅色卡片边界
+
+- 需求 / 问题：用户认为概览和日志状态旁的大号勾选、感叹号生硬，浅色模式卡片边界太弱，希望结合 WinUI 规范调整。
+- 决定 / 改动：移除 `StatusIndicator` 的符号图标，改为状态文字、适度字重和 2px 主题色左侧边线；日志仍显示“信息 / 警告 / 错误”等语义文字，颜色不是唯一依据。卡片边框改用 WinUI `ControlElevationBorderBrush`，继续通过 `ThemeResource` 适配浅色、深色和高对比度。
+- 验证：`dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -v:minimal` 通过，0 警告、0 错误。独立开发测试包 1.0.0.27 签名 Valid、安装 Ok；实际查看浅色概览 / 日志、设置内深色主题预览，浅色卡片边界更清楚，状态不再显示勾选或感叹号，随后取消主题预览，未更改用户主题或配置。
+- 接续：高对比度、不同 DPI、辅助技术和用户目测验收仍待继续；本轮未执行真实校园网认证、下线或测速。官方参考：<https://learn.microsoft.com/en-us/windows/apps/design/accessibility/designing-inclusive-software>、<https://learn.microsoft.com/en-us/windows/apps/develop/ui/theming>。
