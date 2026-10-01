@@ -128,7 +128,7 @@ public sealed partial class MainWindow
             NetworkStatus.Text = value.Network.State switch { "online" => "已连接互联网", "authentication" => "需要认证", "offline" => "网络未连接", "uncertain" => "检测未通过", _ => "尚未检测" };
             OverviewAccount.Text = "配置账号：" + value.Account;
             LastCheck.Text = "上次检测：" + (value.Network.State == "unknown" ? "暂无" : value.Network.CheckedAt.ToLocalTime().ToString("HH:mm:ss"));
-            GuardStatus.Text = backgroundRemoved ? "已停止守护" : value.Guardian;
+            GuardStatus.Text = backgroundRemoved ? "已停止守护" : speedCancellation is not null && value.Guardian == "重连暂缓" ? "测速中，重连暂缓" : value.Guardian;
             ReconnectToggle.IsOn = value.Settings.AutoReconnect; ReconnectToggle.IsEnabled = value.HasProfile && !busy;
             IntervalLabel.Text = $"检测间隔：{value.Settings.IntervalSeconds} 秒";
             UpdateConfiguration();

@@ -84,7 +84,7 @@ public sealed partial class MainWindow
         if (configurationActive)
         {
             OverviewAccount.Text = "本次配置进行中，尚未保存";
-            GuardStatus.Text = "配置中，自动重连暂缓";
+            GuardStatus.Text = "配置中，重连暂缓";
         }
         UpdateResponsiveLayout();
     }

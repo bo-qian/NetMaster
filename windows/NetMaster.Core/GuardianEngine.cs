@@ -35,7 +35,7 @@ public sealed class GuardianEngine : IDisposable
     private void Wake() { try { if (wake.CurrentCount == 0) wake.Release(); } catch (SemaphoreFullException) { } catch (ObjectDisposedException) { } }
     private void NetworkChanged(object? sender, EventArgs args) => Wake();
     private void PublishState() => published = State;
-    private Snapshot State => new() { Network = lastNetwork, Guardian = storage.Profile is null ? "未配置" : !storage.Settings.AutoReconnect ? "已暂停" : DateTimeOffset.UtcNow < manualUntil ? "手动操作中，自动重连暂缓" : rejected ? "等待重新登录" : guardian, HasProfile = storage.Profile is not null, Account = Protocol.Mask(storage.Profile?.Account ?? ""), Settings = storage.Settings, DataDirectory = storage.DataDirectory, StorageError = storage.Error ?? log.LastError };
+    private Snapshot State => new() { Network = lastNetwork, Guardian = storage.Profile is null ? "未配置" : !storage.Settings.AutoReconnect ? "已暂停" : DateTimeOffset.UtcNow < manualUntil ? "重连暂缓" : rejected ? "等待重新登录" : guardian, HasProfile = storage.Profile is not null, Account = Protocol.Mask(storage.Profile?.Account ?? ""), Settings = storage.Settings, DataDirectory = storage.DataDirectory, StorageError = storage.Error ?? log.LastError };
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         using var registration = cancellationToken.Register(() => lifetime.Cancel());
