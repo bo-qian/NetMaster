@@ -97,6 +97,10 @@ public sealed partial class MainWindow
         SetBusy(true);
         try
         {
+            // Confirm the backend's current profile/network state before any destructive reset.
+            // A missing snapshot must not be interpreted as an unconfigured, offline machine.
+            var current = await SendAsync(new Command { Name = "status" }, false);
+            if (current?.Ok != true || closed) return;
             bool saved = snapshot?.HasProfile == true;
             logoutApproved = false;
             if (saved || snapshot?.Network.State == "online")

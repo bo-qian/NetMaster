@@ -88,9 +88,9 @@ public sealed partial class MainWindow
             return reply;
         }
         catch (OperationCanceledException) when (closed) { return null; }
-        catch (Exception ex) when (ex is IOException or TimeoutException or OperationCanceledException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or JsonException)
+        catch (Exception ex) when (ex is IOException or TimeoutException or OperationCanceledException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException or JsonException)
         {
-            if (!closed) { SetGuardianStatus("后台未连接"); NetworkStatus.Text = "状态待重新确认"; NetworkStatus.Tone = StatusTone.Caution; Notice("未收到后台确认，请检查安装或稍后重试。当前操作是否生效需重新读取状态。", true); }
+            if (!closed) { SetGuardianStatus("后台未连接"); NetworkStatus.Text = "状态待重新确认"; NetworkStatus.Tone = StatusTone.Caution; Notice($"后台未连接（0x{ex.HResult:X8}）。当前操作尚未得到确认，请检查安装和 Windows 应用控制提示。", true); }
             return null;
         }
     }
@@ -138,6 +138,7 @@ public sealed partial class MainWindow
     {
         busy = value; DetectButton.IsEnabled = !value; PortalWeb.IsHitTestVisible = !value;
         if (snapshot is not null) ApplySnapshot(snapshot);
+        else UpdateConfiguration();
     }
     private async void Detect_Click(object sender, RoutedEventArgs e)
     {
