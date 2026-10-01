@@ -404,3 +404,7 @@ dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -v:m
 - 当前独立开发测试包 1.0.0.4 / Status=Ok，已安装 UI / Core / Worker DLL 与最终 python-logout-frames 构建 SHA256 一致。桌面“NetMaster 开发测试”入口已更新。
 - 实际运行确认学校子页面账号成功读取并脱敏显示，保留配置步骤。53 项 Core 与 8 项 Node 测试及最终 Debug 构建通过；这些不代替学校实际下线 / 登录 / 保存 / 重连验证。
 - 用户下一步点击重新认证并确认。当前采用 Python 的固定接口 POST userId；不再依赖网页 userIndex / AuthInterFace，未主动替用户执行断网。日志已补齐，源码 / 文档尚未提交或推送。
+
+### 2026-10-01 · 闪电 S 标志探索
+
+用户提出新的品牌方向：蓝色、像闪电的字母 S，同时联想到 SHU（上海大学）与网络连接；不使用固定圆形。已生成透明背景的三款概念草图用于比较，当前仍沿用 `assets/branding/netmaster-icon.png` 作为正式视觉基准，未替换项目资源。下一步等用户选定构图后再细化为可落地的 SVG / PNG 图标，并检查标题栏、任务栏、安装磁贴与小尺寸可读性。

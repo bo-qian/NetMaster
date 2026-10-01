@@ -386,3 +386,9 @@
 - 决定 / 改动：移除 `StatusIndicator` 的符号图标，改为状态文字、适度字重和 2px 主题色左侧边线；日志仍显示“信息 / 警告 / 错误”等语义文字，颜色不是唯一依据。卡片边框改用 WinUI `ControlElevationBorderBrush`，继续通过 `ThemeResource` 适配浅色、深色和高对比度。
 - 验证：`dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -v:minimal` 通过，0 警告、0 错误。独立开发测试包 1.0.0.27 签名 Valid、安装 Ok；实际查看浅色概览 / 日志、设置内深色主题预览，浅色卡片边界更清楚，状态不再显示勾选或感叹号，随后取消主题预览，未更改用户主题或配置。
 - 接续：高对比度、不同 DPI、辅助技术和用户目测验收仍待继续；本轮未执行真实校园网认证、下线或测速。官方参考：<https://learn.microsoft.com/en-us/windows/apps/design/accessibility/designing-inclusive-software>、<https://learn.microsoft.com/en-us/windows/apps/develop/ui/theming>。
+### 2026-10-01 · 探索闪电 S 品牌标志
+
+- 需求 / 方向：用户希望把现有 logo 改为蓝色、像闪电的字母 S，同时联想到 SHU（上海大学）和网络连接；不使用固定圆形，先看草图。
+- 决定 / 改动：使用 ImageGen 生成透明背景的三款几何 S 标志概念，强调小尺寸可识别、可转 SVG、蓝色单色方向；暂不替换仓库中的品牌 PNG / SVG，也未生成正式图标资源。
+- 验证：草图已生成并在对话中展示，输出保留在 Codex 生成目录作为预览；本轮没有修改应用代码、没有构建或打包。
+- 接续：等待用户选择更接近的构图后，再进行定向细化并决定是否制作项目内品牌资源。
