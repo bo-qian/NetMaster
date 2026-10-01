@@ -1,6 +1,6 @@
 # WinUI 验证与发布
 
-发布路线：Microsoft Store 的 MSIX。先完成软件验收，接近提交时再由用户完成个人注册和身份核验。当前 manifest 的 Identity / Publisher 是开发占位，未关联商店账号。
+发布路线：Microsoft Store 的 MSIX。用户已在 Partner Center 建立 `NetMaster 校园网助手` 草稿产品；仍须先完成软件验收再准备正式提交。当前 manifest 的 Identity / Publisher 是开发占位，未关联商店产品身份；个人身份核验具体状态未独立检查。
 
 **最新用户要求：先看实际运行效果并验收功能，确认符合想法后再打包。** 已生成的本地未签名测试素材不发布、不安装，不作为验收成品；此后停止打包。CI 已改为只测试和构建开发版。
 
@@ -52,7 +52,7 @@ Microsoft Store 会在审核后为商店分发包重新签名。源码仓库生�
 ## 个人账号注册与签名说明（2026-10-01 核对）
 
 - 从 [Microsoft Store 开发者入口](https://storedeveloper.microsoft.com/) 的新流程开始，选 Individual developer，使用个人 Microsoft 账号，按页面完成证件与自拍核验；该新流程目前免注册费。避免从旧 Partner Center 或 Visual Studio 注册入口进入旧流程。[微软个人账号步骤](https://learn.microsoft.com/en-us/windows/apps/publish/partner-center/open-a-developer-account)
-- 账号就绪后，在 Partner Center 的 Apps & Games 中新建 MSIX/PWA 应用并预留可用的正式名称。2026-10-02 用户截图显示单独的 `NetMaster` 不可预留，用户确认本账号没有同名产品 / 预留；可试带用途的名称（如 `NetMaster 校园网助手`），具体能否使用以 Partner Center 为准。商店产品名与安装后的包显示名分属不同字段；微软建议两者一致以免困惑，仍可在应用内使用 NetMaster 品牌，名称权利需另行尊重。名称确定后，在 Product identity 中获取商店分配的 Package/Identity/Name、Publisher、PublisherDisplayName，之后才关联项目 manifest。当前占位身份不能当作商店身份。[名称预留规则](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/reserve-your-apps-name) · [列表与安装名](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/add-and-edit-store-listing-info) · [商店身份字段](https://learn.microsoft.com/en-us/windows/apps/publish/view-app-identity-details)
+- 用户已在 Partner Center 的 Apps & Games 中建成 MSIX/PWA 草稿产品 `NetMaster 校园网助手`（截图日期 2026-10-02）；单独 `NetMaster` 此前不可预留。商店产品名与安装后的包显示名分属不同字段；微软建议两者一致以免困惑，应用内仍可使用 NetMaster 品牌。下一步在 Product identity 中取得商店分配的 Package/Identity/Name、Publisher、PublisherDisplayName，再关联正式项目 manifest；当前占位身份不能当作商店身份。[名称预留规则](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/reserve-your-apps-name) · [列表与安装名](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/add-and-edit-store-listing-info) · [商店身份字段](https://learn.microsoft.com/en-us/windows/apps/publish/view-app-identity-details)
 - Store MSIX 通过审核后由微软重新签名；注册不会给开发者一张可导出、可用于任意站外包的签名证书。现有本机自签名开发测试证书也不是正式公开分发证书。若以后要在 GitHub Release 提供独立直装 MSIX，另需站外可信签名方案。[微软签名说明](https://learn.microsoft.com/en-us/windows/apps/publish/get-started)
 - `.p12` / `.pfx` 是 PKCS#12 文件格式，可能包含证书和私钥，并不表示证书具有受信任的代码签名用途或属于本开发者。不购买来源不明的转售文件作为正式签名；公开代码签名应在需要站外直装时，按届时适用条件直接向可信 CA 或合规签名服务申请。当前 Store MSIX 路线无需购买证书。[PKCS#12 规范](https://www.rfc-editor.org/info/rfc7292/) · [微软签名选项](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options)
-- 注册、预留名称可以先完成；实际关联身份、正式打包、上传与提交仍需先完成用户验收及发布前现场验证。个人证件、自拍和 Microsoft 账号凭据只在微软官方页面操作，不写入仓库。
+- 草稿产品已经建立；实际关联身份、正式打包、上传与提交仍需先完成用户验收及发布前现场验证。个人证件、自拍和 Microsoft 账号凭据只在微软官方页面操作，不写入仓库。

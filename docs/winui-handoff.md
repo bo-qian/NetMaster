@@ -2,15 +2,15 @@
 
 最后更新：2026-10-02（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
 
-**商店名称预留（2026-10-02）：** 用户在 Partner Center 输入 `NetMaster` 后收到“名称不可用”，并确认这是自己第一个产品、没有在本账号预留过该名。不能判断占用者或是否已有公开上架应用；微软说明其他开发者未发布的预留也会占用名称。当前无法以单独的 `NetMaster` 作为商店产品名，可试 `NetMaster 校园网助手` 等带用途的名称，实际可用性以 Partner Center 为准。商店列表产品名与安装后的 manifest 显示名是不同字段；不能预留商店名不自动禁止应用内继续使用 NetMaster 品牌，但微软建议列表与安装名一致以免困惑，且名称使用应尊重已有权利。未经用户选定不改应用现有品牌和开发包身份；预留正式名称后再取 Product identity 与 manifest 关联。预留三个月内应提交。
+**商店产品已建立（2026-10-02）：** 用户在 Partner Center 创建了 MSIX/PWA 草稿产品，页面显示名称 `NetMaster 校园网助手`、状态“处于草稿状态”。此前单独 `NetMaster` 不可预留，用户确认这不是本账号已有预留。商店名称已定，应用内仍沿用 NetMaster 品牌；当前 manifest 仍是开发占位身份，尚未从 Product identity 读取并关联正式 Package/Identity/Name、Publisher 和 PublisherDisplayName。草稿建立不等于应用提交、审核通过或发布；预留名称应在微软规定期限内使用。
 
-**注册与签名（本轮核对）：** 用户询问如何注册并取得证书，并看到第三方转售 `.p12`。当前 Store MSIX 路线只需用户从 `storedeveloper.microsoft.com` 新流程注册个人开发者账号并完成身份核验，再在 Partner Center 预留应用名称；新流程目前免注册费。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。`.p12` / `.pfx` 只是可能含证书和私钥的文件格式，来源不明的转售文件不能当作本人的可信代码签名；不为此购买。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。当前未注册、未关联商店身份、未打包或提交。详见 [发布说明](winui-release.md)。
+**注册与签名：** 用户已能在 Partner Center 建立上述草稿产品；个人身份核验的具体状态未独立检查。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。`.p12` / `.pfx` 只是可能含证书和私钥的文件格式，来源不明的转售文件不能当作本人的可信代码签名；不为此购买。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。当前未关联商店身份、未正式打包或提交。详见 [发布说明](winui-release.md)。
 
 **新版使用说明（本轮）：** 根 `README.md` 已改为版本入口，`windows/README.md` 已改为 WinUI 面向用户的使用指南，只说明首次配置、联网与守护、测速、日志、更换账号、设置及数据区别，不再放 Visual Studio / `dotnet` 源码构建步骤。历史 Python 版仍由 `windows/legacy/README.md` 单独说明。WinUI 仍在发布前验收，README 未提供不存在的正式安装链接；没有修改应用逻辑或生成安装包。
 
 **仓库目录（本轮整理）：** `windows/` 现在是 WinUI 发布主线入口，包含 `NetMaster.WinUI/`、`NetMaster.Worker/`、`NetMaster.Core/` 和测试；原 Python Windows 版的六个文件已整体移到 `windows/legacy/`，其 README 单独保留。根 README 与 `windows/README.md` 已改为主线介绍，历史 Release 的 `NetMaster.exe` 标为 Python 旧版；Linux 目录不变。WinUI 与旧版仍使用独立数据，目录整理没有安装、升级或迁移用户配置。WinUI x64 构建、Core 75 项及网页脚本 11 项通过，旧版 Python 因此机无 Python 解释器未做启动测试。`docs/dev-log.md` 的历史记录保留原路径作为当时事实，不批量改写。
 
-**发布讨论（尚未发布）：** 用户认为软件基本接近上线，要求先说明方案。拟以 Microsoft Store 的 MSIX 为首发安装与更新渠道；GitHub Release 放版本说明和商店安装入口，免费上架后可核对 Store Web Installer。仓库生成的未签名 MSIX / msixupload 不作为站外安装包；若以后要提供离线直装 MSIX，须另行解决可信签名与更新。提交前仍需用户明确验收、真实校园网断线恢复 / 登录后自启 / 关闭窗口守护 / 升级卸载现场验证，以及解决新构建后台组件在本机 Smart App Control 下的运行验证。用户注册 Partner Center 个人账号与身份核验在正式提交前办理；当前只讨论，未打包、注册或提交。详见 [发布说明](winui-release.md)。
+**发布讨论（尚未发布）：** 用户认为软件基本接近上线，要求先说明方案。拟以 Microsoft Store 的 MSIX 为首发安装与更新渠道；GitHub Release 放版本说明和商店安装入口，免费上架后可核对 Store Web Installer。仓库生成的未签名 MSIX / msixupload 不作为站外安装包；若以后要提供离线直装 MSIX，须另行解决可信签名与更新。提交前仍需用户明确验收、真实校园网断线恢复 / 登录后自启 / 关闭窗口守护 / 升级卸载现场验证，以及解决新构建后台组件在本机 Smart App Control 下的运行验证。Partner Center 草稿产品已建立，但未关联正式包身份、正式打包或提交。详见 [发布说明](winui-release.md)。
 
 **当前本机预览（覆盖后面的历史版本说明）：** `NetMaster.LocalDevelopment 1.0.0.37` 已安装并实际运行。它包含最新 WinUI（设置三个按钮横排、关于 NetMaster 的仓库 / Issues 入口、后台连接失败时的配置保护），与 1.0.0.29 起源码未改变且此前现场运行正常的 Core / Worker 二进制组合。实际概览显示“已连接互联网 / 守护运行中”，配置页在 1.0.0.36 读到原有已保存状态，1.0.0.37 未重复点开配置页。设置对话框现按可用窗口尺寸固定宽高；展开“关于”前后边界不移动，内容可以独立滚动，滚动条一侧预留 20 DIP 空白。桌面“NetMaster 开发测试”入口图标同步到当前包。未现场点击重新配置、下线、清除数据或保存设置。
 

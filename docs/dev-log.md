@@ -509,3 +509,10 @@
 - 决定 / 改动：核对微软 MSIX 名称预留和列表文档：当前单独 `NetMaster` 无法作为该账号的商店产品名；商店列表名和安装包 manifest 显示名不同，应用内 NetMaster 品牌不因预留失败自动失效。建议尝试带用途的独立商店名，同时注意微软建议列表与安装名一致及第三方名称权利。更新交接和发布说明，未决定或更改正式名称。
 - 验证：核对官方文档和当前占位 manifest；未登录 Partner Center、预留名称、修改代码、构建或打包。
 - 接续：等待用户在 Partner Center 确认可用的正式产品名，再决定发布时显示名称并关联商店身份。
+
+### 2026-10-02 · 商店草稿产品建立
+
+- 需求 / 问题：用户截图确认 Partner Center 已创建 `NetMaster 校园网助手` MSIX/PWA 产品，并表示此步完成。
+- 决定 / 改动：按截图将产品状态记录为“草稿”；更新 `docs/winui-handoff.md` 与 `docs/winui-release.md` 的名称、注册及发布进度。保留 NetMaster 应用内品牌；当前 manifest 仍为开发占位，未擅自关联正式商店身份或提交发布。
+- 验证：核对截图中的产品名与草稿标识、仓库 manifest 的占位 Identity / Publisher；未独立核对账号身份核验、Product identity 字段、运行或商店提交状态。仅文档改动，未构建或打包。
+- 接续：继续功能与安装验收；正式提交准备时取得 Product identity 字段并关联 manifest，再按用户验收结果决定打包与上传。
