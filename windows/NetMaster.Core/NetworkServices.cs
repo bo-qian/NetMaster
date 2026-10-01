@@ -41,7 +41,7 @@ public sealed class NetworkService : INetworkService
         try
         {
             using var response = await http.GetAsync(Protocol.Portal, HttpCompletionOption.ResponseHeadersRead, ct);
-            if (response.IsSuccessStatusCode || (int)response.StatusCode is >= 300 and < 400) return Result("authentication", "校园网可达，互联网检测未通过");
+            if (response.IsSuccessStatusCode || (int)response.StatusCode is >= 300 and < 400) return Result("authentication", "校园网登录页可打开，暂未确认能上网。");
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested) { }
         catch (HttpRequestException) { }
