@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -113,35 +112,4 @@ public sealed class NetworkService : INetworkService
         return Encoding.UTF8.GetString(buffer.ToArray());
     }
     public void Dispose() => http.Dispose();
-}
-
-public sealed record SpeedResult(double? DownloadMbps, double? UploadMbps, double? LatencyMs, string Message);
-public sealed class SpeedService(Func<HttpMessageHandler>? handlerFactory = null)
-{
-    public async Task<SpeedResult> RunAsync(IProgress<string> progress, CancellationToken ct)
-    {
-        using var http = new HttpClient(handlerFactory?.Invoke() ?? new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(30) };
-        double? latency = null, download = null, upload = null;
-        try
-        {
-            progress.Report("正在测量 HTTP 延迟…"); var times = new List<double>();
-            for (int i = 0; i < 4; i++) { var clock = Stopwatch.StartNew(); using var r = await http.GetAsync("https://speed.cloudflare.com/__down?bytes=0", ct); r.EnsureSuccessStatusCode(); if (i > 0) times.Add(clock.Elapsed.TotalMilliseconds); }
-            latency = times.Order().ElementAt(1);
-            progress.Report("正在测量下载（最多 20 MB）…");
-            var watch = Stopwatch.StartNew(); long received = 0;
-            using (var r = await http.GetAsync("https://speed.cloudflare.com/__down?bytes=20000000", HttpCompletionOption.ResponseHeadersRead, ct))
-            {
-                r.EnsureSuccessStatusCode(); using var s = await r.Content.ReadAsStreamAsync(ct); var b = new byte[65536]; int n;
-                while ((n = await s.ReadAsync(b, ct)) > 0) { received += n; if (received > 20000000) throw new InvalidDataException(); }
-            }
-            if (received != 20000000) throw new InvalidDataException();
-            download = received * 8 / watch.Elapsed.TotalSeconds / 1_000_000;
-            progress.Report("正在测量上传（5 MB）…"); var bytes = new byte[5_000_000]; System.Security.Cryptography.RandomNumberGenerator.Fill(bytes); watch.Restart();
-            using (var body = new ByteArrayContent(bytes)) using (var r = await http.PostAsync("https://speed.cloudflare.com/__up", body, ct)) r.EnsureSuccessStatusCode();
-            upload = bytes.Length * 8 / watch.Elapsed.TotalSeconds / 1_000_000;
-            return new(download, upload, latency, $"{DateTime.Now:HH:mm:ss} · Cloudflare · 延迟为 HTTP 请求耗时；结果受线路与测试大小影响。");
-        }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested) { return new(download, upload, latency, "测速已取消。"); }
-        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or InvalidDataException) { return new(download, upload, latency, "测速服务未完成请求，已保留取得的结果；可稍后重试。"); }
-    }
 }

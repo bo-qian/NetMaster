@@ -157,7 +157,7 @@ public sealed partial class MainWindow : Window
         Grid.SetColumn(LatencyMetric, compactMetrics ? 0 : 2);
         Grid.SetRow(UploadMetric, compactMetrics ? 1 : 0);
         Grid.SetRow(LatencyMetric, compactMetrics ? 2 : 0);
-        DownloadMetric.Orientation = UploadMetric.Orientation = LatencyMetric.Orientation = compactMetrics ? Orientation.Horizontal : Orientation.Vertical;
+        DownloadMetric.Orientation = UploadMetric.Orientation = LatencyMetric.Orientation = Orientation.Vertical;
         PageLayout.MinHeight = ContentViewport.ActualHeight;
         UpdatePageHeight();
     }

@@ -106,7 +106,7 @@ public sealed partial class MainWindow
             if (backgroundRemoved) return;
             if (reply?.Ok == true)
             {
-                if (configurationActive || speedCancellation is not null) await SendAsync(new Command { Name = "manual", Enabled = true }, false);
+                if (configurationActive || speedMeasuring) await SendAsync(new Command { Name = "manual", Enabled = true }, false);
                 await LoadLogsAsync();
                 applyingState = true;
                 try { if (!changingStartup) { StartupToggle.IsOn = await GetStartupAsync(); StartupToggle.IsEnabled = true; } }
@@ -124,7 +124,7 @@ public sealed partial class MainWindow
             NetworkStatus.Text = value.Network.State switch { "online" => "已连接互联网", "authentication" => "需要认证", "offline" => "网络未连接", "uncertain" => "检测未通过", _ => "尚未检测" };
             OverviewAccount.Text = "配置账号：" + value.Account;
             LastCheck.Text = "上次检测：" + (value.Network.State == "unknown" ? "暂无" : value.Network.CheckedAt.ToLocalTime().ToString("HH:mm:ss"));
-            GuardStatus.Text = backgroundRemoved ? "已停止守护" : speedCancellation is not null && value.Guardian == "重连暂缓" ? "测速中，重连暂缓" : value.Guardian;
+            GuardStatus.Text = backgroundRemoved ? "已停止守护" : speedMeasuring && value.Guardian == "重连暂缓" ? "测速中，重连暂缓" : value.Guardian;
             ReconnectToggle.IsOn = value.Settings.AutoReconnect; ReconnectToggle.IsEnabled = value.HasProfile && !busy;
             IntervalLabel.Text = $"检测间隔：{value.Settings.IntervalSeconds} 秒";
             UpdateConfiguration();
@@ -181,8 +181,8 @@ public sealed partial class MainWindow
     private async Task SetLoginPageAsync(bool enabled)
     {
         var configuring = configurationActive;
-        if (backgroundRemoved && !configuring && speedCancellation is null) return;
-        await SendAsync(new Command { Name = "manual", Enabled = configuring || speedCancellation is not null }, false);
+        if (backgroundRemoved && !configuring && !speedMeasuring) return;
+        await SendAsync(new Command { Name = "manual", Enabled = configuring || speedMeasuring }, false);
         if (enabled && configuring) await EnsurePortalAsync();
     }
     private async Task EnsurePortalAsync()
@@ -252,18 +252,57 @@ public sealed partial class MainWindow
         if (speedCancellation is not null) { speedCancellation.Cancel(); return; }
         if (busy) return;
         speedCancellation = CancellationTokenSource.CreateLinkedTokenSource(windowLifetime.Token);
+        var run = speedCancellation;
+        bool acceptProgress = true;
+        bool leaseRequested = false;
+        ClearNotice();
+        ShowSpeedValues(null, null, null);
+        SpeedMessage.Text = "正在检查网络连接…";
         SpeedButton.Content = "取消测速";
         try
         {
-            await SendAsync(new Command { Name = "manual", Enabled = true }, false);
-            var result = await new SpeedService().RunAsync(new Progress<string>(text => { if (!closed) SpeedMessage.Text = text; }), speedCancellation.Token);
+            var progress = new Progress<SpeedProgress>(value =>
+            {
+                if (closed || !acceptProgress || !ReferenceEquals(speedCancellation, run)) return;
+                SpeedMessage.Text = value.Message;
+                ShowSpeedValues(value.Download, value.Upload, value.LatencyMs);
+            });
+            var result = await new SpeedService().RunAsync(progress, run.Token, async ct =>
+            {
+                ct.ThrowIfCancellationRequested();
+                if (backgroundRemoved) return true;
+                leaseRequested = true;
+                var reply = await SendAsync(new Command { Name = "manual", Enabled = true }, false);
+                speedMeasuring = reply?.Ok == true;
+                if (snapshot is not null) ApplySnapshot(snapshot);
+                return speedMeasuring;
+            });
+            acceptProgress = false;
             if (closed) return;
-            DownloadValue.Text = result.DownloadMbps is { } down ? $"{down:F1} Mbps" : "— Mbps";
-            UploadValue.Text = result.UploadMbps is { } up ? $"{up:F1} Mbps" : "— Mbps";
-            LatencyValue.Text = result.LatencyMs is { } latency ? $"{latency:F0} ms" : "— ms";
+            ShowSpeedValues(result.Download, result.Upload, result.LatencyMs);
             SpeedMessage.Text = result.Message;
+            if (result.State is "notOnline" or "unavailable") Notice(result.Message, true, "无法测速");
         }
-        finally { speedCancellation.Dispose(); speedCancellation = null; if (!closed) { SpeedButton.Content = "开始测速"; await SetLoginPageAsync(ConfigurationPanel.Visibility == Visibility.Visible); } }
+        finally
+        {
+            acceptProgress = false; run.Dispose(); speedCancellation = null;
+            speedMeasuring = false;
+            if (!closed)
+            {
+                SpeedButton.Content = "开始测速";
+                if (leaseRequested) await SetLoginPageAsync(ConfigurationPanel.Visibility == Visibility.Visible);
+            }
+        }
+    }
+    private bool speedMeasuring;
+    private void ShowSpeedValues(SpeedMeasurement? download, SpeedMeasurement? upload, double? latency)
+    {
+        DownloadValue.Text = download is { } down ? $"{down.AverageMBps:F2} MB/s" : "— MB/s";
+        UploadValue.Text = upload is { } up ? $"{up.AverageMBps:F2} MB/s" : "— MB/s";
+        DownloadRange.Text = Range(download); UploadRange.Text = Range(upload);
+        LatencyValue.Text = latency is { } value ? $"{value:F0} ms" : "— ms";
+        static string Range(SpeedMeasurement? value) => value is null ? "最高 — · 最低 —"
+            : $"最高 {value.MaximumMBps:F2} · 最低 {value.MinimumMBps:F2} MB/s";
     }
     private async Task LoadLogsAsync(bool force = false)
     {

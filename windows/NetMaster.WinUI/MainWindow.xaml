@@ -58,10 +58,10 @@
       <Border Grid.Row="1" Style="{StaticResource Card}"><StackPanel Spacing="10">
        <Grid><TextBlock Text="网络测速" Style="{StaticResource Heading}"/><Button x:Name="SpeedButton" Content="开始测速" HorizontalAlignment="Right" Click="Speed_Click"/></Grid>
        <Grid x:Name="SpeedMetrics" ColumnSpacing="24"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="0"/><RowDefinition Height="0"/></Grid.RowDefinitions>
-        <StackPanel x:Name="DownloadMetric" Spacing="8"><TextBlock Text="下载" Opacity="0.7" VerticalAlignment="Center"/><TextBlock x:Name="DownloadValue" Text="— Mbps" FontSize="30" TextWrapping="Wrap"/></StackPanel>
-        <StackPanel x:Name="UploadMetric" Grid.Column="1" Spacing="8"><TextBlock Text="上传" Opacity="0.7" VerticalAlignment="Center"/><TextBlock x:Name="UploadValue" Text="— Mbps" FontSize="30" TextWrapping="Wrap"/></StackPanel>
+        <StackPanel x:Name="DownloadMetric" Spacing="8"><TextBlock Text="下载平均" Opacity="0.7" VerticalAlignment="Center"/><TextBlock x:Name="DownloadValue" Text="— MB/s" FontSize="30" TextWrapping="Wrap"/><TextBlock x:Name="DownloadRange" Text="最高 — · 最低 —" FontSize="13" Opacity="0.7" TextWrapping="Wrap" ToolTipService.ToolTip="最高、最低为本轮有效传输样本的范围，不包含预热或未完成的请求。"/></StackPanel>
+        <StackPanel x:Name="UploadMetric" Grid.Column="1" Spacing="8"><TextBlock Text="上传平均" Opacity="0.7" VerticalAlignment="Center"/><TextBlock x:Name="UploadValue" Text="— MB/s" FontSize="30" TextWrapping="Wrap"/><TextBlock x:Name="UploadRange" Text="最高 — · 最低 —" FontSize="13" Opacity="0.7" TextWrapping="Wrap" ToolTipService.ToolTip="最高、最低为本轮有效传输样本的范围，不包含预热或未完成的请求。"/></StackPanel>
         <StackPanel x:Name="LatencyMetric" Grid.Column="2" Spacing="8"><TextBlock Text="延迟" Opacity="0.7" VerticalAlignment="Center"/><TextBlock x:Name="LatencyValue" Text="— ms" FontSize="30" TextWrapping="Wrap"/></StackPanel>
-       </Grid><TextBlock x:Name="SpeedMessage" Text="按需测试，将访问 Cloudflare 并使用约 25 MB 流量。" TextWrapping="Wrap" Opacity="0.7"/>
+       </Grid><TextBlock x:Name="SpeedMessage" Text="多路测速 · 每方向约 8 秒，最多共 512 MB 测试数据（另有协议开销）。" TextWrapping="Wrap" Opacity="0.7"/>
       </StackPanel></Border>
       <Border Grid.Row="2" Style="{StaticResource Card}"><StackPanel Spacing="14">
        <Grid><TextBlock Text="最近日志" Style="{StaticResource Heading}"/><HyperlinkButton Content="查看全部" HorizontalAlignment="Right" Click="Logs_Click"/></Grid>
