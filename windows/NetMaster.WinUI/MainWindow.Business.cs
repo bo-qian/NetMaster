@@ -50,6 +50,7 @@ public sealed partial class MainWindow
     {
         if (businessReady) return;
         businessReady = true;
+        Notice("正在读取配置并连接后台…", title: "正在启动");
         worker = new WorkerClient(localStorage.Home, WorkerExecutable);
         statusWorker = new WorkerClient(localStorage.Home, WorkerExecutable);
         LogList.ItemsSource = displayedLogs;
@@ -93,11 +94,6 @@ public sealed partial class MainWindow
             return null;
         }
     }
-    private void Notice(string message, bool error = false)
-    {
-        StatusNotice.Title = error ? "操作未完成" : "状态提示";
-        StatusNotice.Message = message; StatusNotice.Severity = error ? InfoBarSeverity.Warning : InfoBarSeverity.Informational; StatusNotice.IsOpen = true;
-    }
     private async Task RefreshBusinessAsync()
     {
         if (refreshing || busy || closed || backgroundRemoved || worker is null) return;
@@ -133,7 +129,7 @@ public sealed partial class MainWindow
             IntervalLabel.Text = $"检测间隔：{value.Settings.IntervalSeconds} 秒";
             UpdateConfiguration();
             if (value.StorageError is not null) Notice(value.StorageError, true);
-            else if (StatusNotice.Title.ToString() == "正在启动") { StatusNotice.IsOpen = false; }
+            else if (NoticeTitle.Text == "正在启动") ClearNotice();
         }
         finally { applyingState = false; }
     }

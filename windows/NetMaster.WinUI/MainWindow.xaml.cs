@@ -167,8 +167,7 @@ public sealed partial class MainWindow : Window
         // Bound the page only when its real text/buttons and useful minimum
         // content areas fit. Smaller windows retain the outer scroll range.
         double chrome = PageLayout.Padding.Top + PageLayout.Padding.Bottom
-            + PageHeader.DesiredSize.Height + 2 * PageLayout.RowSpacing
-            + (StatusNotice.IsOpen ? StatusNotice.DesiredSize.Height : 0);
+            + PageHeader.DesiredSize.Height + PageLayout.RowSpacing;
         double minimum = double.PositiveInfinity;
         if (ConfigurationPanel.Visibility == Visibility.Visible)
         {

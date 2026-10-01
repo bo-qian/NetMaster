@@ -9,8 +9,6 @@ namespace NetMaster.WinUI;
 
 public sealed partial class MainWindow
 {
-    private void ClearNotice() => StatusNotice.IsOpen = false;
-
     private void UpdateConfiguration()
     {
         if (ConfigurationState is null) return;
@@ -51,8 +49,7 @@ public sealed partial class MainWindow
         ConfigurationMessage.Text = configuration.Message ?? instruction;
         if (configurationActive && configuration.Error && ConfigurationPanel.Visibility == Visibility.Visible)
         {
-            StatusNotice.Title = "配置未完成"; StatusNotice.Message = configuration.Message ?? instruction;
-            StatusNotice.Severity = InfoBarSeverity.Warning; StatusNotice.IsOpen = true;
+            Notice(configuration.Message ?? instruction, true, "配置未完成");
         }
         LoginState.Text = configurationActive ? ConfigurationState.Text : saved ? "配置已完成" : "尚未配置";
         LoginAccount.Text = configurationActive
