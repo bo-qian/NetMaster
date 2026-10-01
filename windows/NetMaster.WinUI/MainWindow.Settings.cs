@@ -16,7 +16,9 @@ public sealed partial class MainWindow
         ClearNotice();
         var settings = snapshot?.Settings ?? localStorage.Settings;
         string? pendingLocation = null;
-        var content = new StackPanel { Spacing = 14 };
+        // WinUI overlays the scrollbar on the right edge of a ScrollViewer.
+        // Keep controls clear of its 16-DIP interaction area.
+        var content = new StackPanel { Spacing = 14, Margin = new Thickness(0, 0, 20, 0) };
         var theme = new ComboBox { Header = "应用主题", HorizontalAlignment = HorizontalAlignment.Stretch };
         foreach (var text in new[] { "跟随系统", "浅色", "深色" }) theme.Items.Add(text);
         theme.SelectedIndex = settings.Theme;
@@ -49,10 +51,20 @@ public sealed partial class MainWindow
             new TextBlock { Text = "保存位置（点击保存后生效）" }, path, choose,
             new TextBlock { Text = "独立操作 · 确认后立即生效，取消设置不会撤销", TextWrapping = TextWrapping.Wrap },
             actions, status, about }) content.Children.Add(child);
-        var dialog = new ContentDialog { Title = "设置", Content = new ScrollViewer { Content = content, MaxHeight = 520 }, PrimaryButtonText = "保存", CloseButtonText = "取消", XamlRoot = Root.XamlRoot, RequestedTheme = Root.RequestedTheme };
-        // Leave room for the three independent actions while fitting the minimum app window.
-        dialog.Resources["ContentDialogMaxWidth"] = 720d;
-        dialog.Resources["ContentDialogMinWidth"] = 600d;
+        // Reserve the same viewport for collapsed and expanded About content.
+        // The dialog stays still; only its content scrolls on smaller windows.
+        var dialogWidth = Math.Min(600, Math.Max(320, Root.ActualWidth - 48));
+        var dialogHeight = Math.Min(666, Math.Max(320, Root.ActualHeight - 48));
+        var scroller = new ScrollViewer
+        {
+            Content = content,
+            Height = Math.Min(520, Math.Max(180, dialogHeight - 146)),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+        };
+        var dialog = new ContentDialog { Title = "设置", Content = scroller, Width = dialogWidth, Height = dialogHeight, PrimaryButtonText = "保存", CloseButtonText = "取消", XamlRoot = Root.XamlRoot, RequestedTheme = Root.RequestedTheme };
+        dialog.Resources["ContentDialogMaxWidth"] = dialogWidth;
+        dialog.Resources["ContentDialogMinWidth"] = dialogWidth;
         theme.SelectionChanged += (_, _) => { ApplyTheme(theme.SelectedIndex); dialog.RequestedTheme = Root.RequestedTheme; };
         choose.Click += async (_, _) =>
         {
