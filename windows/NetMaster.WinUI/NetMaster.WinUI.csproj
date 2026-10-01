@@ -35,6 +35,10 @@
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
   <Target Name="IncludeWorker" BeforeTargets="GetCopyToOutputDirectoryItems;_ComputeAppxPackagePayload" DependsOnTargets="ResolveProjectReferences">
+    <!-- VS can run only the startup project. Build the worker explicitly before
+         asking for its path, so first-run F5 does not copy files that do not exist. -->
+    <MSBuild Projects="../NetMaster.Worker/NetMaster.Worker.csproj" Targets="Build"
+             Properties="Configuration=$(Configuration);Platform=$(Platform);RuntimeIdentifier=$(RuntimeIdentifier);BuildProjectReferences=true" />
     <MSBuild Projects="../NetMaster.Worker/NetMaster.Worker.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);Platform=$(Platform);RuntimeIdentifier=$(RuntimeIdentifier)">
       <Output TaskParameter="TargetOutputs" ItemName="WorkerPath" />
     </MSBuild>

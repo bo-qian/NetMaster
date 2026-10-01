@@ -2,6 +2,8 @@
 
 最后更新：2026-10-02（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
 
+**Visual Studio F5 构建修复（2026-10-02）：** 用户按 F5 后 WinUI 复制阶段找不到 `NetMaster.Worker` 的 runtimeconfig、apphost 和 deps 输出；当时 `Worker/bin/Debug/.../win-x64` 未生成。`NetMaster.WinUI.csproj` 的 `IncludeWorker` 现显式构建 Worker 后再取得路径并复制，覆盖 VS 仅构建启动项目而未先产生 Worker 文件的情况。模拟 `BuildProjectReferences=false` 且先清理 Worker 输出时，目标可重新生成文件；WinUI x64 常规构建 0 错误。**未重新执行 Visual Studio F5 的部署 / 调试全过程**，新构建后台组件仍可能被本机 Smart App Control 拦截。本机已安装的 `NetMaster.LocalDevelopment 1.0.0.37` 保持 Status=Ok，重新启动后 UI 与 Worker 进程均来自该安装目录；继续以此作为用户验收入口。
+
 **商店产品已建立（2026-10-02）：** 用户在 Partner Center 创建了 MSIX/PWA 草稿产品，页面显示名称 `NetMaster 校园网助手`、状态“处于草稿状态”。此前单独 `NetMaster` 不可预留，用户确认这不是本账号已有预留。商店名称已定，应用内仍沿用 NetMaster 品牌；当前 manifest 仍是开发占位身份，尚未从 Product identity 读取并关联正式 Package/Identity/Name、Publisher 和 PublisherDisplayName。草稿建立不等于应用提交、审核通过或发布；预留名称应在微软规定期限内使用。
 
 **注册与签名：** 用户已能在 Partner Center 建立上述草稿产品；个人身份核验的具体状态未独立检查。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。`.p12` / `.pfx` 只是可能含证书和私钥的文件格式，来源不明的转售文件不能当作本人的可信代码签名；不为此购买。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。当前未关联商店身份、未正式打包或提交。详见 [发布说明](winui-release.md)。

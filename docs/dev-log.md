@@ -523,3 +523,10 @@
 - 决定 / 改动：确认源码解决方案为 `windows/NetMaster.WinUI/NetMaster.WinUI.slnx`，工作分支为 `feature/winui3-windows`；本机已安装 `NetMaster.LocalDevelopment 1.0.0.37`，开始菜单名称为“NetMaster 开发测试”。建议从开始菜单运行已验证开发版，在 Visual Studio 打开解决方案查看代码或附加到已运行进程；本机直接 F5 会重新构建，新的后台二进制此前曾被 Smart App Control 拦截，不能当作等效验收入口。未改变代码或安装。
 - 验证：`Get-AppxPackage` 显示 1.0.0.37 / Status=Ok，`Get-StartApps` 列出开发测试入口，进程列表中 UI / Worker 均在运行；未目测本轮窗口或重新操作校园网功能。最近软件代码提交仍早于已安装开发版，后续提交为文档。
 - 接续：用户在已安装开发版中验收概览、配置、日志和实际网络操作；若需调试新代码，先单独处理签名 / Smart App Control 下的重建运行验证。
+
+### 2026-10-02 · 修复 F5 时 Worker 输出缺失
+
+- 需求 / 问题：用户误按 Visual Studio F5，截图显示 WinUI 复制 Worker runtimeconfig、apphost 和 deps 文件时报找不到源文件。
+- 定位 / 改动：失败时 `windows/NetMaster.Worker/bin/Debug/net8.0-windows/win-x64` 未生成；WinUI 原 `IncludeWorker` 只查询 `GetTargetPath` 后复制，未保证 VS 启动项目构建先产出 Worker。`windows/NetMaster.WinUI/NetMaster.WinUI.csproj` 现显式构建 Worker 后再取路径。未改认证、守护逻辑或用户配置。
+- 验证：先清理生成的 Worker x64 输出，再模拟 `BuildProjectReferences=false` 执行 IncludeWorker，Worker 自动生成成功；WinUI x64 常规构建 0 警告 / 0 错误。原开发测试包 1.0.0.37 仍 Status=Ok，重新启动后 UI 和 Worker 进程路径均属于该安装包。未执行 VS F5 的实际部署 / 调试，也未据此认定新后台组件获 Smart App Control 允许。
+- 接续：用户用“NetMaster 开发测试”继续验收；将来若需 F5 调试新二进制，须分别验证打包部署、UI / Worker 通信及本机运行策略。
