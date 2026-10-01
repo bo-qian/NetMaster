@@ -516,3 +516,10 @@
 - 决定 / 改动：按截图将产品状态记录为“草稿”；更新 `docs/winui-handoff.md` 与 `docs/winui-release.md` 的名称、注册及发布进度。保留 NetMaster 应用内品牌；当前 manifest 仍为开发占位，未擅自关联正式商店身份或提交发布。
 - 验证：核对截图中的产品名与草稿标识、仓库 manifest 的占位 Identity / Publisher；未独立核对账号身份核验、Product identity 字段、运行或商店提交状态。仅文档改动，未构建或打包。
 - 接续：继续功能与安装验收；正式提交准备时取得 Product identity 字段并关联 manifest，再按用户验收结果决定打包与上传。
+
+### 2026-10-02 · Visual Studio 打开当前开发版验收
+
+- 需求 / 问题：用户询问如何在本机 Visual Studio 打开最新软件并进行验收。
+- 决定 / 改动：确认源码解决方案为 `windows/NetMaster.WinUI/NetMaster.WinUI.slnx`，工作分支为 `feature/winui3-windows`；本机已安装 `NetMaster.LocalDevelopment 1.0.0.37`，开始菜单名称为“NetMaster 开发测试”。建议从开始菜单运行已验证开发版，在 Visual Studio 打开解决方案查看代码或附加到已运行进程；本机直接 F5 会重新构建，新的后台二进制此前曾被 Smart App Control 拦截，不能当作等效验收入口。未改变代码或安装。
+- 验证：`Get-AppxPackage` 显示 1.0.0.37 / Status=Ok，`Get-StartApps` 列出开发测试入口，进程列表中 UI / Worker 均在运行；未目测本轮窗口或重新操作校园网功能。最近软件代码提交仍早于已安装开发版，后续提交为文档。
+- 接续：用户在已安装开发版中验收概览、配置、日志和实际网络操作；若需调试新代码，先单独处理签名 / Smart App Control 下的重建运行验证。
