@@ -2,6 +2,8 @@
 
 最后更新：2026-10-01（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
 
+**新版使用说明（本轮）：** 根 `README.md` 已改为版本入口，`windows/README.md` 已改为 WinUI 面向用户的使用指南，只说明首次配置、联网与守护、测速、日志、更换账号、设置及数据区别，不再放 Visual Studio / `dotnet` 源码构建步骤。历史 Python 版仍由 `windows/legacy/README.md` 单独说明。WinUI 仍在发布前验收，README 未提供不存在的正式安装链接；没有修改应用逻辑或生成安装包。
+
 **仓库目录（本轮整理）：** `windows/` 现在是 WinUI 发布主线入口，包含 `NetMaster.WinUI/`、`NetMaster.Worker/`、`NetMaster.Core/` 和测试；原 Python Windows 版的六个文件已整体移到 `windows/legacy/`，其 README 单独保留。根 README 与 `windows/README.md` 已改为主线介绍，历史 Release 的 `NetMaster.exe` 标为 Python 旧版；Linux 目录不变。WinUI 与旧版仍使用独立数据，目录整理没有安装、升级或迁移用户配置。WinUI x64 构建、Core 75 项及网页脚本 11 项通过，旧版 Python 因此机无 Python 解释器未做启动测试。`docs/dev-log.md` 的历史记录保留原路径作为当时事实，不批量改写。
 
 **发布讨论（尚未发布）：** 用户认为软件基本接近上线，要求先说明方案。拟以 Microsoft Store 的 MSIX 为首发安装与更新渠道；GitHub Release 放版本说明和商店安装入口，免费上架后可核对 Store Web Installer。仓库生成的未签名 MSIX / msixupload 不作为站外安装包；若以后要提供离线直装 MSIX，须另行解决可信签名与更新。提交前仍需用户明确验收、真实校园网断线恢复 / 登录后自启 / 关闭窗口守护 / 升级卸载现场验证，以及解决新构建后台组件在本机 Smart App Control 下的运行验证。用户注册 Partner Center 个人账号与身份核验在正式提交前办理；当前只讨论，未打包、注册或提交。详见 [发布说明](winui-release.md)。

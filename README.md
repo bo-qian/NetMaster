@@ -1,24 +1,18 @@
 # NetMaster
 
-上海大学校园网连接管理工具。Windows 版正在从 Python 旧版迁移到 WinUI 3；Linux 版继续保留。
+上海大学校园网连接管理工具。Windows 新版使用 WinUI 3，Linux 版继续保留。
 
-Windows WinUI 版提供校园网登录信息配置、断线自动恢复、登录后启动、网络测速和日志查看。联网状态与后台守护状态分别显示；配置仅保存在当前 Windows 用户的数据目录中。
+Windows WinUI 版提供校园网登录信息配置、断线自动恢复、登录后启动、网络测速和日志查看。联网状态与后台守护状态分别显示；登录信息按当前 Windows 用户加密保存。
 
-## 项目结构
+## 使用说明
 
-| 目录 | 内容 | 状态 |
+| 版本 | 说明 | 状态 |
 | --- | --- | --- |
-| [`windows/`](windows/README.md) | WinUI 3 应用、独立守护进程、业务代码及测试 | Windows 后续发布主线；正式版尚未发布 |
-| [`windows/legacy/`](windows/legacy/README.md) | Python + PySide6 旧版 Windows 源码与说明 | 保留供旧用户和源码参考，不再作为新版构建入口 |
-| [`linux/`](linux/README.md) | systemd 守护与 TUI | 独立维护 |
+| [Windows 新版](windows/README.md) | 配置校园网、查看连接与守护状态、测速、查阅日志 | 发布前验收中 |
+| [Windows 旧版](windows/legacy/README.md) | Python 版本的使用说明 | 保留供旧用户参考 |
+| [Linux 版](linux/README.md) | systemd 守护与终端界面 | 独立维护 |
 
-WinUI 版与旧 Windows 版使用独立的数据目录，不会自动导入旧版配置。后续正式版计划通过 Microsoft Store 分发；仓库现有的历史 Release 若包含 `NetMaster.exe`，它属于 Python 旧版。正式版尚在验收，发布计划见[说明](docs/winui-release.md)。
-
-## 从源码运行
-
-- **Windows WinUI 开发版：**参见 [windows/README.md](windows/README.md)。需要 Windows、Visual Studio 的 WinUI 工作负载及 WebView2 Runtime。
-- **Windows Python 旧版：**参见 [windows/legacy/README.md](windows/legacy/README.md)。
-- **Linux：**参见 [linux/README.md](linux/README.md)。
+Windows 新版不会自动导入旧版的登录信息或日志，切换时需要重新配置。正式版计划通过 Microsoft Store 发布；仓库历史 Release 中的 `NetMaster.exe` 属于 Python 旧版，下载时请核对版本说明。
 
 ## Star History
 
