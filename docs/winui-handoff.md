@@ -2,7 +2,7 @@
 
 最后更新：2026-10-01（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
 
-**注册与签名（本轮核对）：** 用户询问如何注册并取得证书。当前 Store MSIX 路线只需用户从 `storedeveloper.microsoft.com` 新流程注册个人开发者账号并完成身份核验，再在 Partner Center 预留应用名称；新流程目前免注册费。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。当前未注册、未关联商店身份、未打包或提交。详见 [发布说明](winui-release.md)。
+**注册与签名（本轮核对）：** 用户询问如何注册并取得证书，并看到第三方转售 `.p12`。当前 Store MSIX 路线只需用户从 `storedeveloper.microsoft.com` 新流程注册个人开发者账号并完成身份核验，再在 Partner Center 预留应用名称；新流程目前免注册费。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。`.p12` / `.pfx` 只是可能含证书和私钥的文件格式，来源不明的转售文件不能当作本人的可信代码签名；不为此购买。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。当前未注册、未关联商店身份、未打包或提交。详见 [发布说明](winui-release.md)。
 
 **新版使用说明（本轮）：** 根 `README.md` 已改为版本入口，`windows/README.md` 已改为 WinUI 面向用户的使用指南，只说明首次配置、联网与守护、测速、日志、更换账号、设置及数据区别，不再放 Visual Studio / `dotnet` 源码构建步骤。历史 Python 版仍由 `windows/legacy/README.md` 单独说明。WinUI 仍在发布前验收，README 未提供不存在的正式安装链接；没有修改应用逻辑或生成安装包。
 
