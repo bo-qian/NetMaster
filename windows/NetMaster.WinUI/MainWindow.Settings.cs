@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
 using NetMaster.Core;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
@@ -27,12 +28,31 @@ public sealed partial class MainWindow
         var clearProfile = new Button { Content = "清除登录信息", IsEnabled = snapshot?.HasProfile == true || configurationActive };
         var clearLogs = new Button { Content = "清除历史日志" };
         var remove = new Button { Content = "停止后台并关闭登录启动" };
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        actions.Children.Add(clearProfile);
+        actions.Children.Add(clearLogs);
+        actions.Children.Add(remove);
+
+        var aboutHeader = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        aboutHeader.Children.Add(new Image { Source = new BitmapImage(new Uri("ms-appx:///Assets/NetMaster.png")), Width = 32, Height = 32 });
+        var appDetails = new StackPanel { Spacing = 2 };
+        appDetails.Children.Add(new TextBlock { Text = "关于 NetMaster", Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"] });
+        appDetails.Children.Add(new TextBlock { Text = GetAppVersionText(), Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"] });
+        aboutHeader.Children.Add(appDetails);
+        var aboutContent = new StackPanel { Spacing = 8 };
+        aboutContent.Children.Add(new TextBlock { Text = "校园网连接管理 · WinUI 版", TextWrapping = TextWrapping.Wrap });
+        aboutContent.Children.Add(new HyperlinkButton { Content = "GitHub · NetMaster", NavigateUri = new Uri("https://github.com/bo-qian/NetMaster"), HorizontalAlignment = HorizontalAlignment.Left });
+        aboutContent.Children.Add(new HyperlinkButton { Content = "报告问题 / 提出建议", NavigateUri = new Uri("https://github.com/bo-qian/NetMaster/issues"), HorizontalAlignment = HorizontalAlignment.Left });
+        aboutContent.Children.Add(new TextBlock { Text = "关闭主窗口后，已启用的后台守护会继续运行。登录后启动由概览中的独立开关控制。卸载请使用 Windows 应用设置。", TextWrapping = TextWrapping.Wrap });
+        var about = new Expander { Header = aboutHeader, Content = aboutContent, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch };
         foreach (var child in new FrameworkElement[] { theme, interval, days,
             new TextBlock { Text = "保存位置（点击保存后生效）" }, path, choose,
             new TextBlock { Text = "独立操作 · 确认后立即生效，取消设置不会撤销", TextWrapping = TextWrapping.Wrap },
-            clearProfile, clearLogs, remove, status,
-            new TextBlock { Text = "关于 NetMaster\n校园网连接管理 · WinUI 版\n关闭主窗口可保留后台守护；登录后启动由概览中的独立开关控制。卸载请使用 Windows 应用设置。", TextWrapping = TextWrapping.Wrap } }) content.Children.Add(child);
+            actions, status, about }) content.Children.Add(child);
         var dialog = new ContentDialog { Title = "设置", Content = new ScrollViewer { Content = content, MaxHeight = 520 }, PrimaryButtonText = "保存", CloseButtonText = "取消", XamlRoot = Root.XamlRoot, RequestedTheme = Root.RequestedTheme };
+        // Leave room for the three independent actions while fitting the minimum app window.
+        dialog.Resources["ContentDialogMaxWidth"] = 720d;
+        dialog.Resources["ContentDialogMinWidth"] = 600d;
         theme.SelectionChanged += (_, _) => { ApplyTheme(theme.SelectedIndex); dialog.RequestedTheme = Root.RequestedTheme; };
         choose.Click += async (_, _) =>
         {
@@ -121,5 +141,20 @@ public sealed partial class MainWindow
         var result = await dialog.ShowAsync();
         if (result != ContentDialogResult.Primary) ApplyTheme(snapshot?.Settings.Theme ?? settings.Theme);
         await RefreshBusinessAsync();
+    }
+
+    private static string GetAppVersionText()
+    {
+        try
+        {
+            var package = Windows.ApplicationModel.Package.Current;
+            var version = package.Id.Version;
+            var channel = package.Id.Name == "NetMaster.LocalDevelopment" ? " · 开发测试版" : string.Empty;
+            return $"版本 {version.Major}.{version.Minor}.{version.Build}.{version.Revision}{channel}";
+        }
+        catch (InvalidOperationException)
+        {
+            return $"版本 {typeof(MainWindow).Assembly.GetName().Version} · 开发预览";
+        }
     }
 }
