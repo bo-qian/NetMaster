@@ -31,3 +31,5 @@ try {
     }
 }
 finally { $source.Dispose() }
+
+& (Join-Path $PSScriptRoot 'Generate-BrandIconPackages.ps1')
