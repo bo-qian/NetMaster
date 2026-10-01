@@ -495,3 +495,10 @@
 - 决定 / 改动：依据 PKCS#12 规范、微软签名选项与 CA/Browser Forum 代码签名私钥保护要求，明确 `.p12` / `.pfx` 是容器格式，不代表可信代码签名或本人身份；不购买来源不明的转售文件。Store MSIX 由微软审核后签名，当前无需另购证书。更新 `docs/winui-release.md` 与 `docs/winui-handoff.md`。
 - 验证：仅核对官方文档和当前发布路线；未购买、导入或使用证书，未改代码、构建或打包。
 - 接续：继续由用户办理 Store 个人注册和名称预留；独立离线包若以后确需发布，再单独评估直接向可信 CA 或合规签名服务申请。
+
+### 2026-10-02 · NetMaster 商店名称不可预留
+
+- 需求 / 问题：用户截图显示 Partner Center 对 `NetMaster` 提示名称不可用。
+- 决定 / 改动：按微软名称预留规则，先检查本账号是否已有同名产品 / 预留；若没有，建议测试 `NetMaster 校园网助手` 等区分用途的商店名，可用性以 Partner Center 为准。更新 `docs/winui-release.md` 和 `docs/winui-handoff.md`，不在名称确定前修改应用品牌或开发包身份。
+- 验证：核对微软官方名称预留与产品身份文档及当前占位 manifest；未登录用户 Partner Center，未预留名称、修改代码、构建或打包。
+- 接续：用户确定并成功预留正式名称后，取得 Product identity，再关联正式 manifest；继续按原计划完成验收后发布。

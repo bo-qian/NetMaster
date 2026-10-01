@@ -1,6 +1,8 @@
 # NetMaster WinUI 开发交接
 
-最后更新：2026-10-01（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
+最后更新：2026-10-02（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
+
+**商店名称预留（2026-10-02）：** 用户在 Partner Center 输入 `NetMaster` 后收到“名称不可用”。目前不能据此判断由谁占用：先检查本账号 Apps & games 中是否已有同名产品 / 预留；若没有，则试 `NetMaster 校园网助手` 等带明确用途的名称，实际可用性以 Partner Center 检查结果为准。未经确认不改应用现有品牌和开发包身份；待用户选定并预留正式名称后，再取商店 Product identity 与 manifest 关联。微软说明商店名必须唯一、未发布预留也会占用名称，预留三个月内应提交。
 
 **注册与签名（本轮核对）：** 用户询问如何注册并取得证书，并看到第三方转售 `.p12`。当前 Store MSIX 路线只需用户从 `storedeveloper.microsoft.com` 新流程注册个人开发者账号并完成身份核验，再在 Partner Center 预留应用名称；新流程目前免注册费。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。`.p12` / `.pfx` 只是可能含证书和私钥的文件格式，来源不明的转售文件不能当作本人的可信代码签名；不为此购买。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。当前未注册、未关联商店身份、未打包或提交。详见 [发布说明](winui-release.md)。
 
