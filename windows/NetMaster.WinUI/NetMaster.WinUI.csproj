@@ -16,6 +16,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="PortalCapture.js" />
+    <EmbeddedResource Include="PortalAccount.js" />
+    <EmbeddedResource Include="PortalLayout.js" />
     <Content Include="Assets\NetMaster.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />

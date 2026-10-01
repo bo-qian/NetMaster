@@ -26,8 +26,8 @@
    <Grid x:Name="PageLayout" Padding="24,18,24,24" RowSpacing="16">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
 
-     <StackPanel Spacing="4"><TextBlock x:Name="PageHeading" Text="概览" FontSize="32" FontWeight="SemiBold"/><TextBlock x:Name="PageDescription" Text="连接状态与最近活动" Opacity="0.7"/></StackPanel>
-     <InfoBar x:Name="StatusNotice" Grid.Row="1" IsOpen="True" IsClosable="False" Title="正在启动" Message="正在读取配置并连接后台…"/>
+     <StackPanel x:Name="PageHeader" Spacing="4" SizeChanged="ContentViewport_SizeChanged"><TextBlock x:Name="PageHeading" Text="概览" FontSize="32" FontWeight="SemiBold"/><TextBlock x:Name="PageDescription" Text="连接状态与最近活动" Opacity="0.7"/></StackPanel>
+     <InfoBar x:Name="StatusNotice" Grid.Row="1" IsOpen="True" IsClosable="False" Title="正在启动" Message="正在读取配置并连接后台…" SizeChanged="ContentViewport_SizeChanged"/>
      <Grid x:Name="OverviewPanel" Grid.Row="2" RowSpacing="16">
       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*" MinHeight="110"/></Grid.RowDefinitions>
       <Grid x:Name="StatusCards" ColumnSpacing="18" RowSpacing="16"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="0"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
@@ -56,34 +56,37 @@
       </StackPanel></Border>
      </Grid>
      <Grid x:Name="ConfigurationPanel" Grid.Row="2" Visibility="Collapsed" RowSpacing="16"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-      <Border Style="{StaticResource Card}"><StackPanel Spacing="12">
-       <TextBlock x:Name="ConfigurationState" Text="尚未配置" FontSize="26" FontWeight="SemiBold"/>
+      <Grid x:Name="ConfigurationHeader" ColumnSpacing="18" SizeChanged="ContentViewport_SizeChanged"><Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="0"/></Grid.RowDefinitions>
+      <Border x:Name="ConfigurationCard" Style="{StaticResource Card}" SizeChanged="ContentViewport_SizeChanged"><StackPanel Spacing="12">
+       <TextBlock x:Name="ConfigurationState" Text="尚未配置" FontSize="26" FontWeight="SemiBold" TextWrapping="Wrap"/>
        <TextBlock x:Name="ConfigurationAccount" Text="配置一次，之后由 NetMaster 自动检测并恢复校园网连接。" TextWrapping="Wrap" Opacity="0.7"/>
        <TextBlock x:Name="ConfigurationSteps" Text="① 获取登录信息　→　② 确认有效　→　③ 保存并启用守护" TextWrapping="Wrap"/>
        <TextBlock x:Name="ConfigurationMessage" Text="点击开始配置，软件会引导你完成认证。" TextWrapping="Wrap" Opacity="0.7"/>
-       <StackPanel Orientation="Horizontal" Spacing="12"><Button x:Name="StartConfigurationButton" Content="开始配置" Click="StartConfiguration_Click"/><Button x:Name="RestartAuthenticationButton" Content="重新认证" Click="RestartAuthentication_Click" Visibility="Collapsed"/><Button x:Name="CancelConfigurationButton" Content="取消配置" Click="CancelConfiguration_Click" Visibility="Collapsed"/></StackPanel>
+       <Grid x:Name="ConfigurationButtonRow" ColumnSpacing="12" HorizontalAlignment="Left"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="0"/></Grid.RowDefinitions>
+        <Button x:Name="StartConfigurationButton" Content="开始配置" Click="StartConfiguration_Click"/><Button x:Name="RestartAuthenticationButton" Content="重新认证" Click="RestartAuthentication_Click" Visibility="Collapsed"/><Button x:Name="CancelConfigurationButton" Grid.Column="1" Content="取消配置" Click="CancelConfiguration_Click" Visibility="Collapsed"/>
+        <StackPanel x:Name="ConfigurationActions" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" Visibility="Collapsed"><Button x:Name="ValidateButton" Content="测试配置" Click="Validate_Click" IsEnabled="False"/><Button x:Name="SaveProfileButton" Content="保存并启用守护" Click="SaveProfile_Click" IsEnabled="False"/></StackPanel>
+       </Grid>
       </StackPanel></Border>
-     <Grid x:Name="LoginPanel" Grid.Row="1" Visibility="Collapsed" ColumnSpacing="18" RowSpacing="16"><Grid.RowDefinitions><RowDefinition/><RowDefinition Height="0"/></Grid.RowDefinitions>
-      <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-      <Border x:Name="PortalCard" MinHeight="380" Style="{StaticResource Card}"><Grid RowSpacing="16"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-       <TextBlock Text="获取登录信息" Style="{StaticResource Heading}"/>
-       <Grid Grid.Row="1" ColumnSpacing="8"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <Border x:Name="LoginInfoCard" Grid.Column="1" Style="{StaticResource Card}" Visibility="Collapsed"><StackPanel Spacing="12">
+       <TextBlock Text="登录信息" Style="{StaticResource Heading}"/><TextBlock x:Name="LoginState" Text="等待登录" FontSize="26" TextWrapping="Wrap"/>
+       <TextBlock x:Name="LoginAccount" Text="配置账号：未获取" TextWrapping="Wrap"/><TextBlock x:Name="LoginSaved" Text="登录信息：未保存" TextWrapping="Wrap"/>
+       <TextBlock x:Name="LoginExplanation" Text="完成网页认证并获取登录信息后，才能验证、保存并启用守护。" TextWrapping="Wrap" Opacity="0.7"/>
+      </StackPanel></Border>
+      </Grid>
+     <Grid x:Name="LoginPanel" Grid.Row="1" Visibility="Collapsed">
+      <Border x:Name="PortalCard" Style="{StaticResource Card}"><Grid x:Name="PortalLayout" RowSpacing="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+       <TextBlock x:Name="PortalHeading" Text="获取登录信息" Style="{StaticResource Heading}"/>
+       <Grid x:Name="PortalAddressRow" Grid.Row="1" ColumnSpacing="8"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <TextBox Text="http://10.10.9.9" IsReadOnly="True" AutomationProperties.Name="校园网地址"/>
         <Button Grid.Column="1" Content="刷新" Click="RefreshPortal_Click"/><Button Grid.Column="2" Content="在浏览器中打开" Click="OpenPortal_Click"/>
        </Grid>
-       <Border Grid.Row="2" Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="8"><WebView2 x:Name="PortalWeb" MinHeight="260"/></Border>
-       <TextBlock Grid.Row="3" x:Name="PortalStatus" Text="请在校园网环境打开认证网页。" TextWrapping="Wrap" Opacity="0.7"/>
+       <Border x:Name="PortalViewport" Grid.Row="2" Background="{ThemeResource LayerFillColorDefaultBrush}" CornerRadius="8" Loaded="PortalViewport_Loaded" SizeChanged="PortalViewport_SizeChanged"><WebView2 x:Name="PortalWeb" MinHeight="160"/></Border>
+       <TextBlock Grid.Row="3" x:Name="PortalStatus" Text="请在校园网环境打开认证网页。" TextWrapping="Wrap" Opacity="0.7" SizeChanged="ContentViewport_SizeChanged"/>
       </Grid></Border>
-      <Border x:Name="LoginInfoCard" Grid.Column="1" Style="{StaticResource Card}"><StackPanel Spacing="20">
-       <TextBlock Text="登录信息" Style="{StaticResource Heading}"/><TextBlock x:Name="LoginState" Text="等待登录" FontSize="26" TextWrapping="Wrap"/>
-       <TextBlock x:Name="LoginAccount" Text="配置账号：未获取"/><TextBlock x:Name="LoginSaved" Text="登录信息：未保存"/>
-       <TextBlock x:Name="LoginExplanation" Text="完成网页认证并获取登录信息后，才能验证、保存并启用守护。" TextWrapping="Wrap" Opacity="0.7"/>
-       <Button x:Name="ValidateButton" Content="验证登录" Click="Validate_Click" IsEnabled="False" HorizontalAlignment="Stretch"/><Button x:Name="SaveProfileButton" Content="保存并启用守护" Click="SaveProfile_Click" IsEnabled="False" HorizontalAlignment="Stretch"/>
-      </StackPanel></Border>
      </Grid>
      </Grid>
      <Grid x:Name="LogsPanel" Grid.Row="2" Visibility="Collapsed" RowSpacing="16"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-      <Border Style="{StaticResource Card}"><StackPanel Spacing="14">
+      <Border x:Name="LogFiltersCard" Style="{StaticResource Card}" SizeChanged="ContentViewport_SizeChanged"><StackPanel Spacing="14">
        <Grid x:Name="LogFilters" ColumnSpacing="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="0"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <AutoSuggestBox x:Name="LogSearch" PlaceholderText="搜索日志" TextChanged="LogSearch_Changed" AutomationProperties.Name="搜索日志"/>
         <ComboBox x:Name="LogLevel" Grid.Column="1" SelectedIndex="0" SelectionChanged="LogFilter_Changed" HorizontalAlignment="Stretch" AutomationProperties.Name="日志级别"><ComboBoxItem Content="全部级别"/><ComboBoxItem Content="信息"/><ComboBoxItem Content="警告"/><ComboBoxItem Content="错误"/></ComboBox>
@@ -91,17 +94,17 @@
         <Button x:Name="LogExport" Grid.Column="3" Content="导出" Click="Export_Click"/>
        </Grid><StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="实时更新" VerticalAlignment="Center" Opacity="0.7"/><ToggleSwitch x:Name="LiveLogs" MinWidth="0" Height="32" OffContent="" OnContent="" IsOn="True" Toggled="LiveLogs_Toggled" AutomationProperties.Name="实时更新"/></StackPanel>
       </StackPanel></Border>
-      <Border Grid.Row="1" Style="{StaticResource Card}"><Grid RowSpacing="16"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-       <Grid ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition Width="112"/><ColumnDefinition Width="56"/><ColumnDefinition/></Grid.ColumnDefinitions>
+      <Border x:Name="LogRecordsCard" Grid.Row="1" Style="{StaticResource Card}"><Grid x:Name="LogRecordsLayout" RowSpacing="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+       <Grid x:Name="LogColumns" ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition Width="112"/><ColumnDefinition Width="56"/><ColumnDefinition/></Grid.ColumnDefinitions>
         <TextBlock Text="时间" FontWeight="SemiBold"/><TextBlock Grid.Column="1" Text="级别" FontWeight="SemiBold"/><TextBlock Grid.Column="2" Text="事件" FontWeight="SemiBold"/>
        </Grid>
-       <Grid Grid.Row="1" MinHeight="150"><ListView x:Name="LogList" MaxHeight="320" SelectionChanged="LogList_SelectionChanged">
+       <Grid Grid.Row="1" MinHeight="120"><ListView x:Name="LogList" MaxHeight="320" SelectionChanged="LogList_SelectionChanged">
         <ListView.ItemContainerStyle><Style TargetType="ListViewItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="0,8"/></Style></ListView.ItemContainerStyle>
         <ListView.ItemTemplate><DataTemplate><Grid ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition Width="112"/><ColumnDefinition Width="56"/><ColumnDefinition/></Grid.ColumnDefinitions><TextBlock Text="{Binding TimeLabel}"/><TextBlock Grid.Column="1" Text="{Binding Level}"/><TextBlock Grid.Column="2" Text="{Binding Message}" TextWrapping="Wrap"/></Grid></DataTemplate></ListView.ItemTemplate>
        </ListView><TextBlock x:Name="LogsEmpty" Text="暂无符合条件的日志" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="22"/></Grid>
        <Grid x:Name="LogFooter" Grid.Row="2" ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="0"/></Grid.RowDefinitions><StackPanel x:Name="LogFooterOptions" Orientation="Horizontal" Spacing="12"><CheckBox x:Name="AutoScroll" Content="自动滚动" IsChecked="True"/><TextBlock x:Name="LogCount" Text="已显示 0 条记录" VerticalAlignment="Center" Opacity="0.7"/><Button x:Name="MoreLogs" Content="更多" Click="MoreLogs_Click"/></StackPanel><Button x:Name="CopyLogButton" Grid.Column="1" Content="复制选中记录" Click="CopyLog_Click" HorizontalAlignment="Right" IsEnabled="False"/></Grid>
       </Grid></Border>
-      <Border Grid.Row="2" Style="{StaticResource Card}"><StackPanel Spacing="14"><TextBlock Text="记录详情" Style="{StaticResource Heading}"/><TextBlock x:Name="LogDetails" Text="选择一条记录以查看详细信息。" TextWrapping="Wrap" IsTextSelectionEnabled="True" Opacity="0.7"/></StackPanel></Border>
+      <Border x:Name="LogDetailsCard" Grid.Row="2" Height="220" Style="{StaticResource Card}"><Grid RowSpacing="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions><TextBlock Text="记录详情" Style="{StaticResource Heading}"/><ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><TextBlock x:Name="LogDetails" Text="选择一条记录以查看详细信息。" TextWrapping="Wrap" IsTextSelectionEnabled="True" Opacity="0.7"/></ScrollViewer></Grid></Border>
      </Grid>
    </Grid>
    </ScrollViewer>

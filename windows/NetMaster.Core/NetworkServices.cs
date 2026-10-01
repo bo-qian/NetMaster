@@ -53,6 +53,10 @@ public sealed class NetworkService : INetworkService
         profile.Validate();
         using var request = new HttpRequestMessage(HttpMethod.Post, Protocol.Login);
         request.Content = new StringContent(profile.Payload, Encoding.UTF8, "application/x-www-form-urlencoded");
+        // The school's interface returns an empty body without the browser
+        // User-Agent used by windows/main.py, even for parameter errors.
+        request.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0");
+        request.Content.Headers.ContentType!.CharSet = "UTF-8";
         request.Headers.TryAddWithoutValidation("Origin", Protocol.Portal);
         request.Headers.Referrer = new Uri(Protocol.Portal + "/eportal/index.jsp");
         try
@@ -64,6 +68,26 @@ public sealed class NetworkService : INetworkService
         catch (OperationCanceledException) when (!ct.IsCancellationRequested) { return new("unavailable", "认证请求超时，请稍后重试。"); }
         catch (HttpRequestException) { return new("unavailable", "无法连接校园网认证服务，请确认已连接校园网。"); }
         catch (InvalidDataException) { return new("unavailable", "认证响应异常，请重新打开认证网页。"); }
+    }
+    public async Task<AuthResult> LogoutAsync(string account, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(account) || account.Length > 128 || account.Any(char.IsControl)) throw new InvalidDataException("未获取到当前在线账号。");
+        // Match windows/main.py: POST the displayed userId directly, without
+        // relying on page JavaScript globals or a browser session userIndex.
+        using var request = new HttpRequestMessage(HttpMethod.Post, Protocol.Logout)
+        { Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["userId"] = account }) };
+        try
+        {
+            using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            if (!response.IsSuccessStatusCode) return new("unavailable", "学校下线服务暂时不可用。");
+            var parsed = ParseAuthentication(await ReadBoundedAsync(response.Content, 131072, ct));
+            return parsed.Success ? new("success", "学校已确认下线。") : parsed.State == "unavailable"
+                ? new("unavailable", "下线请求已发送，但未收到有效结果，请刷新查看学校网页。")
+                : new("rejected", "学校未确认下线成功，请刷新网页后重试。");
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested) { return new("unavailable", "下线请求超时，请刷新网页确认当前状态。"); }
+        catch (HttpRequestException) { return new("unavailable", "无法连接学校下线服务，请稍后重试。"); }
+        catch (InvalidDataException) { return new("unavailable", "学校下线响应异常，请刷新网页确认当前状态。"); }
     }
     public static AuthResult ParseAuthentication(string body)
     {

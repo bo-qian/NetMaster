@@ -9,10 +9,12 @@ public static class Protocol
     public const int Version = 1;
     public const string Portal = "http://10.10.9.9";
     public const string Login = Portal + "/eportal/InterFace.do?method=login";
+    public const string Logout = Portal + "/eportal/InterFace.do?method=logout";
     public static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
     public static string UserKey => WindowsIdentity.GetCurrent().User!.Value.Replace('-', '_');
     public static string PipeName(string home) => "NetMaster_v1_" + UserKey + "_" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(Path.GetFullPath(home).ToUpperInvariant())))[..12];
-    public static bool IsLogin(string uri, string method) => method.Equals("POST", StringComparison.OrdinalIgnoreCase) && Uri.TryCreate(uri, UriKind.Absolute, out var u) && u.Scheme == "http" && u.Host == "10.10.9.9" && u.Port == 80 && u.AbsolutePath.Equals("/eportal/InterFace.do", StringComparison.OrdinalIgnoreCase) && Form(u.Query.TrimStart('?')).GetValueOrDefault("method") == "login";
+    public static bool IsPortalSource(string uri) => Uri.TryCreate(uri, UriKind.Absolute, out var u) && u.Scheme == "http" && u.Host == "10.10.9.9" && u.Port is 80 or 8080;
+    public static bool IsLogin(string uri, string method) => method.Equals("POST", StringComparison.OrdinalIgnoreCase) && IsPortalSource(uri) && Uri.TryCreate(uri, UriKind.Absolute, out var u) && u.AbsolutePath.Equals("/eportal/InterFace.do", StringComparison.OrdinalIgnoreCase) && Form(u.Query.TrimStart('?')).GetValueOrDefault("method") == "login";
     public static Dictionary<string, string> Form(string data)
     {
         var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

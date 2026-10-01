@@ -4,12 +4,17 @@
 
 **最新用户要求：先看实际运行效果并验收功能，确认符合想法后再打包。** 已生成的本地未签名测试素材不发布、不安装，不作为验收成品；此后停止打包。CI 已改为只测试和构建开发版。
 
+最新本机开发部署结果（2026-10-01）：用户要求实际解决预览后，已成功安装并运行自签名的 NetMaster.LocalDevelopment 测试 MSIX。SAC 保持开启。独立测试身份解决了同名 VS loose 注册导致的 0x80073CFB；原注册 / 数据保留。桌面和开始菜单入口为“NetMaster 开发测试”，用于本机验收。已查看三页、开始 / 取消配置及真实网页 / 日志，未完成真实认证保存或断网重连；不是正式发布。测试证书公钥已按系统管理员确认加入 TrustedPeople，私钥不可导出，30 天有效；证书与构建产物不提交 Git。不要再用旧的未打包 configuration-preview exe 作为本轮入口。
+
+本机测试部署调研（2026-10-01）：微软推荐 MSIX 本地开发使用自签名证书与显式信任；这与正式发布签名是不同阶段。[官方指南](https://learn.microsoft.com/en-us/windows/msix/package/sign-msix-package-guide)。当前用户只要求调研，尚未生成 / 安装自签名测试包。另台电脑为远程使用，不安排其断网 / 注销测试。本机开发者模式已开启，SAC 仍启用；MSIX 能安装不等于所有组件能通过 SAC 运行检查。官方 SAC 签名要求采用受信任提供者证书，自签名不能作为本次拦截的确定修复。[SAC 签名要求](https://learn.microsoft.com/en-us/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control)。
+
 ## 自动验证
 
 在 Windows 仓库根目录执行：
 
 ```powershell
 dotnet test windows/NetMaster.Core.Tests/NetMaster.Core.Tests.csproj -v:minimal
+node --test tools/tests/portal-capture.test.cjs tools/tests/portal-layout.test.cjs
 dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -p:WindowsPackageType=None -p:GenerateAppxPackageOnBuild=false -p:OutDir=./bin/acceptance-preview/ -v:minimal
 ```
 
@@ -34,7 +39,7 @@ GitHub Actions 配置仅测试和构建开发版，不打包、不创建 Release
 | 测速 | 可控测试：完整 / 短响应 / 取消，缺失结果保持空值 | Cloudflare 实际可达性、测速耗时、取消和部分结果、不同窗口大小的数值显示 |
 | 安装与自启 | x64 Release 和未签名 MSIX / 上传素材生成 | 合法签名 / 授权开发环境下安装、StartupTask、关闭自启、升级与卸载；x86 / ARM64 尚未构建验收 |
 
-本机先前 Smart App Control 阻止旧业务预览加载未签名 Core DLL。没有关闭保护或重复尝试绕过。随后用户正常打开 acceptance-preview，反馈当前已连接。最新配置流程使用单独 configuration-preview 输出；本轮实际启动尝试被新 UI.dll 的签名策略阻止（CodeIntegrity 3077 / 3033、.NET Runtime 0x800711C7），没有取得新页面截图。两版运行证据分别记录：旧版能启动不代表新编译组件必然被允许，新版启动受阻也不否定旧版用户反馈。新配置流程、现场认证重配 / 断网重连与签名安装仍需验收。
+历史未打包预览确曾被 SAC 阻止。当前标准自签名本机开发 MSIX 1.0.0.19 正常安装运行，三个应用 DLL 与最终构建一致，SAC 保持开启；65 项 Core 与 11 项网页脚本测试通过。配置状态已统一，确认重配后清除旧登录信息、不留取消备份。应用真实下线 / 登录 / 新流程保存、断网恢复、登录后启动与用户完整验收仍待完成；本轮 UI 实查未提交真实认证或清除用户已保存凭证。仅用于开发验收，未正式发布。
 
 ## Store 与 GitHub Release
 

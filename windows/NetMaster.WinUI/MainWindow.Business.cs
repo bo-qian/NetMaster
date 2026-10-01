@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -31,8 +30,15 @@ public sealed partial class MainWindow
     private DispatcherTimer? businessTimer;
     private bool businessReady, refreshing, applyingState, busy, closed, portalReady, portalLoading, backgroundRemoved, changingStartup;
     private long captureGeneration;
-    private bool configurationActive;
-    private LoginProfile? candidate;
+    private readonly ConfigurationSession configuration = new();
+    private bool configurationActive => configuration.Active;
+    private bool configurationExpanded, preparingAuthentication, logoutApproved, logoutAttempted;
+    private bool ConfigurationDetailsVisible => configurationActive || snapshot?.HasProfile == true;
+    private PortalCapture? portalCapture;
+    private string captureSession = "", captureScriptId = "";
+    private string? portalOnlineAccount;
+    private readonly List<CoreWebView2Frame> portalFrames = new();
+    private LoginProfile? candidate => configuration.Candidate;
     private IReadOnlyList<LogEntry> allLogs = Array.Empty<LogEntry>();
     private readonly LogReader logReader = new();
     private readonly ObservableCollection<LogEntry> displayedLogs = new();
@@ -98,11 +104,13 @@ public sealed partial class MainWindow
         refreshing = true;
         try
         {
+            if (configurationActive && portalReady && candidate is null)
+                try { portalOnlineAccount = await ReadPortalAccountAsync(); await PrepareAuthenticationAsync(); } catch { }
             var reply = await SendAsync(new Command(), false);
             if (backgroundRemoved) return;
             if (reply?.Ok == true)
             {
-                if (configurationActive && ConfigurationPanel.Visibility == Visibility.Visible || speedCancellation is not null) await SendAsync(new Command { Name = "manual", Enabled = true }, false);
+                if (configurationActive || speedCancellation is not null) await SendAsync(new Command { Name = "manual", Enabled = true }, false);
                 await LoadLogsAsync();
                 applyingState = true;
                 try { if (!changingStartup) { StartupToggle.IsOn = await GetStartupAsync(); StartupToggle.IsEnabled = true; } }
@@ -120,13 +128,9 @@ public sealed partial class MainWindow
             NetworkStatus.Text = value.Network.State switch { "online" => "已连接互联网", "authentication" => "需要认证", "offline" => "网络未连接", "uncertain" => "检测未通过", _ => "尚未检测" };
             OverviewAccount.Text = "配置账号：" + value.Account;
             LastCheck.Text = "上次检测：" + (value.Network.State == "unknown" ? "暂无" : value.Network.CheckedAt.ToLocalTime().ToString("HH:mm:ss"));
-            GuardStatus.Text = value.Guardian;
+            GuardStatus.Text = backgroundRemoved ? "已停止守护" : value.Guardian;
             ReconnectToggle.IsOn = value.Settings.AutoReconnect; ReconnectToggle.IsEnabled = value.HasProfile && !busy;
             IntervalLabel.Text = $"检测间隔：{value.Settings.IntervalSeconds} 秒";
-            LoginSaved.Text = value.HasProfile ? "登录信息：已加密保存" : "登录信息：未保存";
-            if (candidate is null) { LoginAccount.Text = "配置账号：" + value.Account; LoginState.Text = value.HasProfile ? "已保存登录信息" : "等待登录"; }
-            ValidateButton.IsEnabled = !busy && (candidate is not null || value.HasProfile);
-            SaveProfileButton.IsEnabled = !busy && candidate?.Confirmed == true;
             UpdateConfiguration();
             if (value.StorageError is not null) Notice(value.StorageError, true);
             else if (StatusNotice.Title.ToString() == "正在启动") { StatusNotice.IsOpen = false; }
@@ -180,84 +184,10 @@ public sealed partial class MainWindow
     }
     private async Task SetLoginPageAsync(bool enabled)
     {
-        var configuring = enabled && configurationActive;
+        var configuring = configurationActive;
         if (backgroundRemoved && !configuring && speedCancellation is null) return;
         await SendAsync(new Command { Name = "manual", Enabled = configuring || speedCancellation is not null }, false);
-        if (configuring) await EnsurePortalAsync();
-    }
-    private void UpdateConfiguration()
-    {
-        if (ConfigurationState is null) return;
-        var saved = snapshot?.HasProfile == true;
-        ConfigurationState.Text = configurationActive ? candidate?.Confirmed == true ? "登录信息已确认，等待保存" : candidate is not null ? "已获取登录信息，等待确认" : "正在配置" : saved ? "已配置" : "尚未配置";
-        ConfigurationAccount.Text = saved ? "当前配置账号：" + snapshot!.Account : "配置一次，之后由 NetMaster 自动检测并恢复校园网连接。";
-        ConfigurationSteps.Text = configurationActive ? candidate?.Confirmed == true ? "① 已获取　→　② 已确认　→　③ 保存并启用守护" : candidate is not null ? "① 已获取　→　② 验证登录　→　③ 保存并启用守护" : "① 获取登录信息　→　② 确认有效　→　③ 保存并启用守护" : "① 获取登录信息　→　② 确认有效　→　③ 保存并启用守护";
-        ConfigurationMessage.Text = configurationActive ? candidate?.Confirmed == true ? "登录信息已确认。点击下方保存按钮，完成配置并启用守护。" : snapshot?.Network.State == "online" && candidate is null ? "当前已联网。点击重新认证后填写登录信息，软件会继续引导配置；重新认证会暂时断网。" : "请在下方完成认证。配置期间暂缓自动重连，新信息保存成功后才替换原配置。" : saved ? snapshot!.Settings.AutoReconnect ? "后台守护已启用。需要更换账号或登录信息时，点击重新配置。" : "登录信息已保存，自动重连已暂停。可在概览恢复守护，也可以重新配置。" : "点击开始配置，软件会引导获取登录信息、确认并保存。";
-        StartConfigurationButton.Content = saved ? "重新配置" : "开始配置";
-        OverviewConfigureButton.Content = saved ? "重新配置" : "开始配置";
-        StartConfigurationButton.Visibility = configurationActive ? Visibility.Collapsed : Visibility.Visible;
-        StartConfigurationButton.IsEnabled = !busy && businessReady;
-        CancelConfigurationButton.Visibility = configurationActive ? Visibility.Visible : Visibility.Collapsed;
-        CancelConfigurationButton.IsEnabled = !busy;
-        RestartAuthenticationButton.Visibility = configurationActive && candidate?.Confirmed != true ? Visibility.Visible : Visibility.Collapsed;
-        RestartAuthenticationButton.IsEnabled = !busy && portalReady;
-        LoginPanel.Visibility = configurationActive ? Visibility.Visible : Visibility.Collapsed;
-    }
-    private async void StartConfiguration_Click(object sender, RoutedEventArgs e)
-    {
-        if (busy || !businessReady || configurationActive) return;
-        SetBusy(true);
-        try
-        {
-            var reply = await SendAsync(new Command { Name = "manual", Enabled = true });
-            if (reply?.Ok != true) return;
-            ++captureGeneration; configurationActive = true; UpdateConfiguration();
-            LoginExplanation.Text = "请完成一次认证。软件会获取本次登录信息，确认后即可保存并启用守护。";
-            var wasReady = portalReady;
-            await EnsurePortalAsync();
-            if (wasReady && portalReady) PortalWeb.CoreWebView2.Navigate(Protocol.Portal);
-        }
-        finally { SetBusy(false); }
-    }
-    private async void CancelConfiguration_Click(object sender, RoutedEventArgs e)
-    {
-        if (busy) return;
-        ++captureGeneration; configurationActive = false; candidate = null;
-        if (portalReady) PortalWeb.CoreWebView2.Stop();
-        UpdateConfiguration();
-        await SetLoginPageAsync(ConfigurationPanel.Visibility == Visibility.Visible);
-        Notice("已取消本次配置，原有配置保持不变。");
-    }
-    private async void RestartAuthentication_Click(object sender, RoutedEventArgs e)
-    {
-        if (busy || !configurationActive || !portalReady || settingsOpen) return;
-        var dialog = new ContentDialog { Title = "重新认证", Content = "重新认证将退出当前校园网连接，网络会暂时断开。随后填写账号和密码，软件将获取新的登录信息。原配置保留到新配置保存成功。", PrimaryButtonText = "重新认证", CloseButtonText = "取消", DefaultButton = ContentDialogButton.Close, XamlRoot = Root.XamlRoot };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary || closed) return;
-        SetBusy(true);
-        try
-        {
-            if ((await SendAsync(new Command { Name = "manual", Enabled = true }, false))?.Ok != true) return;
-            var result = await PortalWeb.CoreWebView2.ExecuteScriptAsync("""
-                (() => {
-                    if (location.origin !== 'http://10.10.9.9') return 'unsupported';
-                    const buttons = Array.from(document.querySelectorAll('button,a,input[type="button"],input[type="submit"]'))
-                        .filter(node => !node.disabled && node.getClientRects().length > 0 &&
-                            /^(注销|退出|退出登录|下线)$/.test((node.innerText || node.value || node.textContent || '').replace(/\s/g, '')));
-                    if (buttons.length !== 1) return 'unavailable';
-                    buttons[0].click();
-                    return 'requested';
-                })()
-                """);
-            if (JsonSerializer.Deserialize<string>(result) == "requested")
-            {
-                ++captureGeneration; candidate = null;
-                PortalStatus.Text = "已请求重新认证，请等待网页显示登录表单后填写账号和密码。";
-                LoginExplanation.Text = "重新认证成功后，软件会获取新的登录信息。";
-            }
-            else PortalStatus.Text = "当前网页未提供可识别的重新认证入口。若已显示登录表单，直接填写；若显示已登录，可使用网页中的注销入口。";
-        }
-        catch { PortalStatus.Text = "重新认证请求未完成，请查看网页状态后重试。"; }
-        finally { SetBusy(false); }
+        if (enabled && configuring) await EnsurePortalAsync();
     }
     private async Task EnsurePortalAsync()
     {
@@ -266,68 +196,61 @@ public sealed partial class MainWindow
         try
         {
             PortalStatus.Text = "正在加载校园网认证网页…";
-            var environment = await CoreWebView2Environment.CreateWithOptionsAsync(null, Path.Combine(localStorage.Home, "webview"), null);
+            var options = new CoreWebView2EnvironmentOptions { ScrollBarStyle = CoreWebView2ScrollbarStyle.FluentOverlay };
+            var environment = await CoreWebView2Environment.CreateWithOptionsAsync(null, Path.Combine(localStorage.Home, "webview"), options);
             await PortalWeb.EnsureCoreWebView2Async(environment);
+            UpdatePortalClip();
             var core = PortalWeb.CoreWebView2;
-            core.WebResourceResponseReceived += Portal_ResponseReceived;
-            core.NavigationCompleted += (_, args) => PortalStatus.Text = args.IsSuccess ? "请在网页登录。成功认证后可保存并启用守护。" : "校园网网页无法加载，请确认网络连接，或使用浏览器打开后重试。";
-            core.NewWindowRequested += (_, args) => { args.Handled = true; PortalStatus.Text = "认证网页请求打开新窗口，请使用外部浏览器入口。"; };
+            core.WebMessageReceived += Portal_MessageReceived;
+            core.FrameCreated += (_, args) => RegisterPortalFrame(args.Frame);
+            core.NavigationCompleted += async (_, args) => { UpdatePortalClip(); await PortalNavigatedAsync(args.IsSuccess); };
+            core.NewWindowRequested += (_, args) => { args.Handled = true; if (configurationActive) configuration.Fail("网页请求打开新窗口，请使用外部浏览器入口检查页面。"); UpdateConfiguration(); };
+            using (var layoutStream = typeof(MainWindow).Assembly.GetManifestResourceStream("NetMaster.WinUI.PortalLayout.js") ?? throw new IOException("缺少网页适配脚本。"))
+            using (var layoutReader = new StreamReader(layoutStream))
+                await core.AddScriptToExecuteOnDocumentCreatedAsync(await layoutReader.ReadToEndAsync());
+            await InstallCaptureScriptAsync();
             portalReady = true; core.Navigate(Protocol.Portal);
         }
-        catch { PortalStatus.Text = "内嵌网页初始化失败，请检查 WebView2 Runtime 安装，或使用外部浏览器入口。"; }
+        catch { if (configurationActive) configuration.Fail("内嵌网页初始化失败，请检查 WebView2 Runtime 或点击刷新重试。"); UpdateConfiguration(); }
         finally { portalLoading = false; }
     }
-    private async void Portal_ResponseReceived(CoreWebView2 sender, CoreWebView2WebResourceResponseReceivedEventArgs args)
+    private async Task InstallCaptureScriptAsync()
     {
-        if (!configurationActive || ConfigurationPanel.Visibility != Visibility.Visible || !Protocol.IsLogin(args.Request.Uri, args.Request.Method) || closed) return;
-        var generation = ++captureGeneration;
-        try
-        {
-            if (args.Request.Content is null) { PortalStatus.Text = "未能读取认证信息，请在网页重新提交登录。"; return; }
-            using var requestStream = args.Request.Content.AsStreamForRead();
-            if (requestStream.CanSeek) requestStream.Position = 0;
-            using var requestContent = new System.Net.Http.StreamContent(requestStream);
-            var payload = await NetworkService.ReadBoundedAsync(requestContent, 65536, windowLifetime.Token);
-            var profile = new LoginProfile { Payload = payload }; profile.Validate();
-            var responseContent = await args.Response.GetContentAsync();
-            if (responseContent is null) return;
-            using var responseStream = responseContent.AsStreamForRead();
-            using var content = new System.Net.Http.StreamContent(responseStream);
-            var result = NetworkService.ParseAuthentication(await NetworkService.ReadBoundedAsync(content, 131072, windowLifetime.Token));
-            if (closed || generation != captureGeneration) return;
-            // Keep the latest observed response if asynchronous reads finish out of order.
-            candidate = profile with { Confirmed = result.Success, VerifiedAt = result.Success ? DateTimeOffset.Now : null };
-            LoginAccount.Text = "配置账号：" + Protocol.Mask(candidate.Account);
-            LoginState.Text = result.Success ? "认证成功，尚未保存" : "已获取，待验证";
-            LoginExplanation.Text = result.Message;
-            if (snapshot is not null) ApplySnapshot(snapshot);
-            await SendAsync(new Command { Name = "detect" }, false);
-        }
-        catch (OperationCanceledException) when (closed) { }
-        catch { if (!closed) PortalStatus.Text = "未获取到可用的认证信息，请重新登录或重试验证。"; }
+        var core = PortalWeb.CoreWebView2;
+        if (captureScriptId.Length > 0) core.RemoveScriptToExecuteOnDocumentCreated(captureScriptId);
+        using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("NetMaster.WinUI.PortalCapture.js") ?? throw new IOException("缺少认证捕获脚本。");
+        using var reader = new StreamReader(stream);
+        captureScriptId = await core.AddScriptToExecuteOnDocumentCreatedAsync((await reader.ReadToEndAsync()).Replace("__NETMASTER_SESSION__", captureSession));
     }
-    private async void RefreshPortal_Click(object sender, RoutedEventArgs e) { if (portalReady) PortalWeb.CoreWebView2.Reload(); else await EnsurePortalAsync(); }
-    private async void Validate_Click(object sender, RoutedEventArgs e)
+    private async Task<string?> ReadPortalAccountAsync()
     {
-        if (busy) return; var validating = candidate; SetBusy(true);
-        try
+        using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("NetMaster.WinUI.PortalAccount.js") ?? throw new IOException();
+        using var reader = new StreamReader(stream);
+        var script = await reader.ReadToEndAsync();
+        var account = JsonSerializer.Deserialize<string>(await PortalWeb.CoreWebView2.ExecuteScriptAsync(script));
+        if (!string.IsNullOrWhiteSpace(account)) return account;
+        // The school's top-level success page embeds its online UI in a frame.
+        // Execute inside that frame, with the script checking the school origin.
+        foreach (var frame in portalFrames.ToArray())
         {
-            var result = await SendAsync(new Command { Name = "validate", Profile = validating });
-            if (ReferenceEquals(candidate, validating) && result?.Authentication is { } auth)
+            try
             {
-                LoginExplanation.Text = auth.Message;
-                if (candidate is not null && auth.Success) { candidate = candidate with { Confirmed = true, VerifiedAt = DateTimeOffset.Now }; LoginState.Text = "验证成功，尚未保存"; }
-                else if (candidate is not null && auth.State == "rejected") candidate = candidate with { Confirmed = false };
+                account = JsonSerializer.Deserialize<string>(await frame.ExecuteScriptAsync(script));
+                if (!string.IsNullOrWhiteSpace(account)) return account;
             }
+            catch { /* A frame may be destroyed during navigation. */ }
         }
-        finally { SetBusy(false); }
+        return null;
     }
-    private async void SaveProfile_Click(object sender, RoutedEventArgs e)
+    private void RegisterPortalFrame(CoreWebView2Frame frame)
     {
-        if (busy || candidate?.Confirmed != true) return; var saving = candidate; SetBusy(true);
-        try { var reply = await SendAsync(new Command { Name = "saveProfile", Profile = saving }); if (reply?.Ok == true && ReferenceEquals(candidate, saving)) { ++captureGeneration; candidate = null; configurationActive = false; LoginExplanation.Text = "配置已完成，后台守护已启用。"; UpdateConfiguration(); await SetLoginPageAsync(ConfigurationPanel.Visibility == Visibility.Visible); Notice("配置已完成，后台守护已启用。关闭主窗口后仍会继续。"); } }
-        finally { SetBusy(false); await RefreshBusinessAsync(); }
+        portalFrames.Add(frame);
+        frame.WebMessageReceived += (_, message) => HandlePortalMessage(message);
+        frame.FrameCreated += (_, child) => RegisterPortalFrame(child.Frame);
+        frame.Destroyed += (_, _) => portalFrames.Remove(frame);
     }
+    private void Portal_MessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
+        => HandlePortalMessage(args);
     private async void Speed_Click(object sender, RoutedEventArgs e)
     {
         if (speedCancellation is not null) { speedCancellation.Cancel(); return; }
@@ -391,6 +314,7 @@ public sealed partial class MainWindow
             else if (!reset && scroll is not null) DispatcherQueue.TryEnqueue(() => { if (!closed) scroll.ChangeView(null, offset, null, true); });
         }
         LogsEmpty.Visibility = page.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        LogExport.IsEnabled = query.Count > 0;
         LogCount.Text = $"{page.Count} / {query.Count} 条"; MoreLogs.Visibility = page.Count < query.Count ? Visibility.Visible : Visibility.Collapsed;
     }
     private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
@@ -403,8 +327,8 @@ public sealed partial class MainWindow
         }
         return null;
     }
-    private void LogSearch_Changed(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) => FilterLogs();
-    private void LogFilter_Changed(object sender, SelectionChangedEventArgs args) => FilterLogs();
+    private void LogSearch_Changed(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) { if (StatusNotice is not null) ClearNotice(); FilterLogs(); }
+    private void LogFilter_Changed(object sender, SelectionChangedEventArgs args) { if (StatusNotice is not null) ClearNotice(); FilterLogs(); }
     private async void LiveLogs_Toggled(object sender, RoutedEventArgs e) { if (businessReady && LiveLogs.IsOn) await LoadLogsAsync(true); }
     private void MoreLogs_Click(object sender, RoutedEventArgs e) { logLimit += 100; FilterLogs(false); }
     private void LogList_SelectionChanged(object sender, SelectionChangedEventArgs args)
@@ -431,95 +355,5 @@ public sealed partial class MainWindow
             Notice($"已导出当前筛选范围，共 {entries.Count} 条记录。");
         }
         catch { Notice("导出失败，请检查目标文件权限。", true); }
-    }
-    private async Task ShowBusinessSettingsAsync()
-    {
-        var settings = snapshot?.Settings ?? localStorage.Settings;
-        var content = new StackPanel { Spacing = 14 };
-        var theme = new ComboBox { Header = "应用主题", HorizontalAlignment = HorizontalAlignment.Stretch };
-        foreach (var text in new[] { "跟随系统", "浅色", "深色" }) theme.Items.Add(text); theme.SelectedIndex = settings.Theme;
-        theme.SelectionChanged += (_, _) => ApplyTheme(theme.SelectedIndex);
-        var interval = new NumberBox { Header = "检测间隔（秒，5–3600）", Value = settings.IntervalSeconds, Minimum = 5, Maximum = 3600, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
-        var days = new NumberBox { Header = "日志保留天数（1–365）", Value = settings.RetentionDays, Minimum = 1, Maximum = 365, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
-        var path = new TextBlock { Text = snapshot?.DataDirectory ?? localStorage.DataDirectory, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true };
-        var choose = new Button { Content = "更改保存位置" };
-        var import = new Button { Content = "导入旧版登录配置" };
-        var remove = new Button { Content = "移除后台启动并停止守护" };
-        var confirmClear = new CheckBox { Content = "我确认清除下面选择的数据", IsChecked = false };
-        var clearProfile = new Button { Content = "清除已保存的登录信息", IsEnabled = false };
-        var clearLogs = new Button { Content = "清除历史日志", IsEnabled = false };
-        var status = new TextBlock { TextWrapping = TextWrapping.Wrap };
-        foreach (var child in new FrameworkElement[] { theme, interval, days, new TextBlock { Text = "数据保存位置" }, path, choose, import, remove, confirmClear, clearProfile, clearLogs, status, new TextBlock { Text = "关于 NetMaster\n校园网连接管理 · WinUI 版\n关闭窗口可保留已启用的后台守护。移除后台保留配置和日志；卸载应用请使用 Windows 应用设置。更改保存位置留下的原目录备份需单独处理。", TextWrapping = TextWrapping.Wrap } }) content.Children.Add(child);
-        void UpdateClearButtons() { clearProfile.IsEnabled = clearLogs.IsEnabled = confirmClear.IsChecked == true; }
-        confirmClear.Checked += (_, _) => UpdateClearButtons();
-        confirmClear.Unchecked += (_, _) => UpdateClearButtons();
-        clearProfile.Click += async (_, _) =>
-        {
-            confirmClear.IsChecked = false;
-            var reply = await SendAsync(new Command { Name = "clearProfile" }, false);
-            status.Text = reply?.Message ?? "未收到后台确认。";
-            if (reply?.Ok == true) { ++captureGeneration; candidate = null; LoginState.Text = "等待登录"; LoginExplanation.Text = "已清除当前保存的登录信息。旧版文件及迁移备份需单独处理。"; if (snapshot is not null) ApplySnapshot(snapshot); }
-        };
-        clearLogs.Click += async (_, _) =>
-        {
-            confirmClear.IsChecked = false;
-            var reply = await SendAsync(new Command { Name = "clearLogs" }, false);
-            status.Text = reply?.Message ?? "未收到后台确认。";
-            if (reply?.Ok == true) await LoadLogsAsync(true);
-        };
-        choose.Click += async (_, _) =>
-        {
-            choose.IsEnabled = false;
-            try
-            {
-                var picker = new FolderPicker(); picker.FileTypeFilter.Add("*"); InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-                var folder = await picker.PickSingleFolderAsync(); if (folder is null) return;
-                var reply = await SendAsync(new Command { Name = "move", DataDirectory = folder.Path }, false);
-                status.Text = reply?.Message ?? "未收到后台确认。"; if (reply?.Ok == true) path.Text = reply.Snapshot!.DataDirectory;
-            }
-            catch { status.Text = "无法更改保存位置。"; }
-            finally { choose.IsEnabled = true; }
-        };
-        import.Click += async (_, _) =>
-        {
-            try
-            {
-                var picker = new FileOpenPicker(); picker.FileTypeFilter.Add(".json"); InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-                var file = await picker.PickSingleFileAsync(); if (file is null) return;
-                if ((await file.GetBasicPropertiesAsync()).Size > 131072) throw new InvalidDataException();
-                using var json = JsonDocument.Parse(await Windows.Storage.FileIO.ReadTextAsync(file));
-                var root = json.RootElement;
-                if (root.TryGetProperty("login_url", out var url) && !Protocol.IsLogin(url.GetString() ?? "", "POST")) throw new InvalidDataException();
-                var p = new LoginProfile { Payload = root.GetProperty("login_payload").GetString() ?? "" }; p.Validate(); ++captureGeneration; candidate = p;
-                status.Text = "旧版登录信息已导入内存，请关闭设置后验证登录。未修改旧版任务或配置。";
-                LoginAccount.Text = "配置账号：" + Protocol.Mask(p.Account); LoginState.Text = "已导入，待验证"; if (snapshot is not null) ApplySnapshot(snapshot);
-            }
-            catch { status.Text = "不是可用的旧版校园网配置，未导入。"; }
-        };
-        remove.Click += async (_, _) =>
-        {
-            remove.IsEnabled = false; SetBusy(true);
-            try { await SetStartupAsync(false); var reply = await SendAsync(new Command { Name = "shutdown" }, false); status.Text = reply?.Message ?? "未收到后台确认。"; if (reply?.Ok == true) { backgroundRemoved = true; GuardStatus.Text = "已停止守护"; } }
-            catch { status.Text = "移除未完成，请检查 Windows 启动项设置。"; }
-            finally { SetBusy(false); if (backgroundRemoved) GuardStatus.Text = "已停止守护"; remove.IsEnabled = true; }
-        };
-        var dialog = new ContentDialog { Title = "设置", Content = new ScrollViewer { Content = content, MaxHeight = 520 }, PrimaryButtonText = "保存", CloseButtonText = "取消", XamlRoot = Root.XamlRoot };
-        dialog.PrimaryButtonClick += async (_, args) =>
-        {
-            var deferral = args.GetDeferral();
-            try
-            {
-                if (!double.IsFinite(interval.Value) || !double.IsFinite(days.Value) || interval.Value != Math.Truncate(interval.Value) || days.Value != Math.Truncate(days.Value)) { args.Cancel = true; status.Text = "请输入有效的整数。"; return; }
-                var current = snapshot?.Settings ?? settings;
-                var updated = current with { Theme = theme.SelectedIndex, IntervalSeconds = (int)interval.Value, RetentionDays = (int)days.Value }; updated.Validate();
-                var reply = await SendAsync(new Command { Name = "settings", Settings = updated }, false);
-                args.Cancel = reply?.Ok != true; if (args.Cancel) status.Text = reply?.Message ?? "设置未得到后台确认，请重试。";
-            }
-            catch { args.Cancel = true; status.Text = "设置未保存，请检查输入或后台状态。"; }
-            finally { deferral.Complete(); }
-        };
-        var result = await dialog.ShowAsync();
-        if (result != ContentDialogResult.Primary) ApplyTheme(snapshot?.Settings.Theme ?? settings.Theme);
-        await RefreshBusinessAsync();
     }
 }

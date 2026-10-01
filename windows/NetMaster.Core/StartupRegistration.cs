@@ -12,18 +12,28 @@ public static class StartupRegistration
     }
     public static bool LegacyTaskRunning()
     {
-        try { return (int)Service().GetFolder("\\").GetTask("NetMaster_SHU_Auto_Login").State == 4; }
-        catch (System.Runtime.InteropServices.COMException ex) when ((uint)ex.HResult == 0x80070002) { return false; }
+        dynamic? task = FindTask("NetMaster_SHU_Auto_Login");
+        return task is not null && (int)task.State == 4;
     }
     public static bool Enabled()
     {
-        try { return (bool)Service().GetFolder("\\").GetTask(Name).Enabled; }
-        catch (System.Runtime.InteropServices.COMException ex) when ((uint)ex.HResult == 0x80070002) { return false; }
+        dynamic? task = FindTask(Name);
+        return task is not null && (bool)task.Enabled;
     }
+    internal static object? FindTask(string name)
+    {
+        dynamic folder = Service().GetFolder("\\");
+        // COM's ERROR_FILE_NOT_FOUND is mapped to FileNotFoundException by .NET.
+        // Limit this handling to looking up a task, not loading the COM service.
+        try { return folder.GetTask(name); }
+        catch (Exception ex) when (MissingTask(ex)) { return null; }
+    }
+    private static bool MissingTask(Exception ex) =>
+        (ex is FileNotFoundException or System.Runtime.InteropServices.COMException) && (uint)ex.HResult == 0x80070002;
     public static void SetEnabled(bool enabled, string executable, string home)
     {
         dynamic service = Service(); dynamic folder = service.GetFolder("\\");
-        if (!enabled) { try { folder.DeleteTask(Name, 0); } catch (System.Runtime.InteropServices.COMException ex) when ((uint)ex.HResult == 0x80070002) { } return; }
+        if (!enabled) { try { folder.DeleteTask(Name, 0); } catch (Exception ex) when (MissingTask(ex)) { } return; }
         if (!File.Exists(executable)) throw new FileNotFoundException();
         dynamic definition = service.NewTask(0);
         definition.RegistrationInfo.Description = "NetMaster 校园网后台守护（当前用户登录后启动）";

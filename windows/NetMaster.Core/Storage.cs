@@ -38,7 +38,16 @@ public sealed class AppStorage
         }
         catch { Profile = null; Settings = new(); Error = "配置损坏或当前 Windows 用户无法读取凭证。原文件已保留，请重新获取登录信息后保存。"; }
     }
-    public void Save(Settings settings, LoginProfile? profile)
+    public void Save(Settings settings, LoginProfile? profile, bool preserveRecovery = true)
+    {
+        var text = SerializeConfiguration(settings, profile);
+        var config = Path.Combine(DataDirectory, "settings.json");
+        if (preserveRecovery && Error is not null && File.Exists(config))
+            File.Copy(config, config + ".recovery-" + Guid.NewGuid().ToString("N"), false);
+        AtomicWrite(config, text);
+        Settings = settings; Profile = profile; Error = null;
+    }
+    private static string SerializeConfiguration(Settings settings, LoginProfile? profile)
     {
         settings.Validate(); profile?.Validate();
         string? secret = null;
@@ -48,17 +57,14 @@ public sealed class AppStorage
             try { secret = Convert.ToBase64String(ProtectedData.Protect(clear, null, DataProtectionScope.CurrentUser)); }
             finally { CryptographicOperations.ZeroMemory(clear); }
         }
-        var config = Path.Combine(DataDirectory, "settings.json");
-        if (Error is not null && File.Exists(config))
-            File.Copy(config, config + ".recovery-" + Guid.NewGuid().ToString("N"), false);
-        AtomicWrite(config, JsonSerializer.Serialize(new Envelope(1, settings, secret), Protocol.Json));
-        Settings = settings; Profile = profile; Error = null;
+        return JsonSerializer.Serialize(new Envelope(1, settings, secret), Protocol.Json);
     }
-    public void MoveTo(string parent)
+    public void MoveTo(string parent, Settings? settings = null)
     {
+        settings?.Validate();
         // Own one child directory; never move/delete the user's selected parent.
         var destination = Path.GetFullPath(Path.Combine(parent, "NetMaster-WinUI"));
-        if (destination.Equals(DataDirectory, StringComparison.OrdinalIgnoreCase)) return;
+        if (destination.Equals(DataDirectory, StringComparison.OrdinalIgnoreCase)) { if (settings is not null) Save(settings, Profile); return; }
         if (destination.StartsWith(DataDirectory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new IOException("不能把数据目录移入自身。");
         if (DataDirectory.StartsWith(destination.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || destination.Equals(Home, StringComparison.OrdinalIgnoreCase)) throw new IOException("不能使用包含当前应用数据的目录。");
         if (Directory.Exists(destination) && Directory.EnumerateFileSystemEntries(destination).Any()) throw new IOException("目标 NetMaster-WinUI 目录已有数据，请选择其他位置。");
@@ -68,7 +74,8 @@ public sealed class AppStorage
         try
         {
         foreach (var name in new[] { "settings.json" })
-            if (File.Exists(Path.Combine(DataDirectory, name))) File.Copy(Path.Combine(DataDirectory, name), Path.Combine(staging, name), false);
+            if (settings is not null) AtomicWrite(Path.Combine(staging, name), SerializeConfiguration(settings, Profile));
+            else if (File.Exists(Path.Combine(DataDirectory, name))) File.Copy(Path.Combine(DataDirectory, name), Path.Combine(staging, name), false);
         var logs = Path.Combine(DataDirectory, "logs");
         if (Directory.Exists(logs))
         {
@@ -79,6 +86,7 @@ public sealed class AppStorage
         Directory.Move(staging, destination);
         AtomicWrite(Path.Combine(Home, "location.json"), JsonSerializer.Serialize(destination));
         DataDirectory = destination;
+        if (settings is not null) { Settings = settings; Error = null; }
         }
         finally
         {

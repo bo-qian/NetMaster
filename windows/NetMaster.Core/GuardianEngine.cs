@@ -82,7 +82,7 @@ public sealed class GuardianEngine : IDisposable
                     await writer.WriteLineAsync(JsonSerializer.Serialize(new Reply(true, "", published with { Heartbeat = DateTimeOffset.UtcNow }), Protocol.Json));
                     return;
                 }
-                if (command.Version == Protocol.Version && (command.Name is "shutdown" or "clearProfile" || command.Name == "manual" && command.Enabled || command.Name == "reconnect" && !command.Enabled))
+                if (command.Version == Protocol.Version && (command.Name is "shutdown" or "clearProfile" or "beginConfiguration" or "cancelConfiguration" || command.Name == "manual" && command.Enabled || command.Name == "reconnect" && !command.Enabled))
                     try { active?.Cancel(); } catch (ObjectDisposedException) { }
                 await gate.WaitAsync(timeout.Token);
                 Reply reply;
@@ -97,13 +97,13 @@ public sealed class GuardianEngine : IDisposable
                         if (command.Name != "status") { if (replies.Count >= 128) replies.Remove(replies.Keys.First()); replies[command.Id] = reply; }
                     }
                 }
-                catch (Exception ex) when (ex is IOException or InvalidDataException or System.Security.Cryptography.CryptographicException or UnauthorizedAccessException) { reply = new(false, "操作未完成，请检查数据目录权限、配置与可用空间。", State); log.Write("错误", "后台", "command.failed", "配置或存储操作失败，原有配置保持可用。"); }
+                catch (Exception ex) when (ex is IOException or InvalidDataException or System.Security.Cryptography.CryptographicException or UnauthorizedAccessException) { reply = new(false, "无法保存或读取配置，请检查数据目录权限、配置与可用空间。", State); log.Write("错误", "后台", "command.failed", $"配置或存储操作失败（{ex.GetType().Name}，0x{ex.HResult:X8}）。"); }
                 catch (OperationCanceledException) { reply = new(false, "操作已取消。", State); }
                 catch (System.Runtime.InteropServices.COMException) { reply = new(false, "无法读取 Windows 后台任务状态，请检查任务计划程序。", State); }
                 finally { active = null; PublishState(); gate.Release(); }
                 await writer.WriteLineAsync(JsonSerializer.Serialize(reply, Protocol.Json));
                 if (command.Name == "shutdown" && reply.Ok) lifetime.Cancel();
-                else if ((reply.Ok && command.Name is "settings" or "reconnect" or "saveProfile" or "clearProfile") || (command.Name == "manual" && !command.Enabled)) Wake();
+                else if ((reply.Ok && command.Name is "settings" or "reconnect" or "saveProfile" or "clearProfile" or "cancelConfiguration") || (command.Name == "manual" && !command.Enabled)) Wake();
             }
             catch (Exception ex) when (ex is IOException or OperationCanceledException or JsonException or InvalidDataException) { }
         }
@@ -116,6 +116,19 @@ public sealed class GuardianEngine : IDisposable
             case "status": return new(true, "", State);
             case "detect": await DetectAsync(ct); return new(true, lastNetwork.Detail, State);
             case "manual": manualUntil = c.Enabled ? DateTimeOffset.UtcNow.AddSeconds(30) : DateTimeOffset.MinValue; return new(true, "", State);
+            case "beginConfiguration":
+                storage.Save(storage.Settings with { AutoReconnect = false }, null, preserveRecovery: false);
+                manualUntil = DateTimeOffset.UtcNow.AddSeconds(30); rejected = false;
+                log.Write("信息", "配置", "configuration.begin", "已开始新配置，旧登录信息已清除。");
+                return new(true, "", State);
+            case "cancelConfiguration":
+                storage.Save(storage.Settings with { AutoReconnect = false }, null, preserveRecovery: false);
+                manualUntil = DateTimeOffset.MinValue; rejected = false;
+                log.Write("信息", "配置", "configuration.cancel", "已取消本次配置，当前未配置自动重连。");
+                return new(true, "已取消配置，当前未配置自动重连。", State);
+            case "validateCandidate":
+                if (c.Profile is null) return new(false, "尚未获取本次登录信息，请先在网页完成登录。", State);
+                goto case "validate";
             case "validate":
                 var profile = c.Profile ?? storage.Profile;
                 if (profile is null) return new(false, "请先在认证网页获取登录信息。", State);
@@ -131,7 +144,9 @@ public sealed class GuardianEngine : IDisposable
                 guardian = "运行中"; log.Write("信息", "配置", "profile.saved", "登录信息已加密保存，自动重连已启用。"); return new(true, "登录信息已保存，后台守护已启用。", State);
             case "settings":
                 if (c.Settings?.AutoReconnect == true && storage.Profile is not { Confirmed: true }) return new(false, "请先验证并保存登录信息，再开启自动重连。", State);
-                storage.Save(c.Settings ?? throw new InvalidDataException(), storage.Profile);
+                var settings = c.Settings ?? throw new InvalidDataException(); settings.Validate();
+                if (c.DataDirectory is null) storage.Save(settings, storage.Profile);
+                else storage.MoveTo(c.DataDirectory, settings);
                 log.Write("信息", "配置", "settings.saved", "设置已保存并应用。"); return new(true, "设置已保存。", State);
             case "reconnect":
                 if (c.Enabled && storage.Profile is not { Confirmed: true }) return new(false, "请先获取并保存经过验证的登录信息。", State);
@@ -141,7 +156,7 @@ public sealed class GuardianEngine : IDisposable
                 log.Write("信息", "守护", "guardian.toggle", c.Enabled ? "自动重连已启用。" : "自动重连已暂停。"); return new(true, c.Enabled ? "自动重连已启用。" : "已暂停自动重连，现有网络连接不受影响。", State);
             case "move": storage.MoveTo(c.DataDirectory ?? throw new InvalidDataException()); log.Write("信息", "配置", "storage.moved", "数据保存位置已更新，原目录保留备份。"); return new(true, "保存位置已更新，原目录保留备份。", State);
             case "shutdown": storage.Save(storage.Settings with { AutoReconnect = false }, storage.Profile); return new(true, "已暂停守护，后台将在处理完当前连接后退出。配置和日志已保留。", State);
-            case "clearProfile": storage.Save(storage.Settings with { AutoReconnect = false }, null); rejected = false; log.Write("信息", "配置", "profile.removed", "已清除保存的登录信息并暂停重连。"); return new(true, "登录信息已清除，现有网络连接不受影响。", State);
+            case "clearProfile": storage.Save(storage.Settings with { AutoReconnect = false }, null, preserveRecovery: false); rejected = false; log.Write("信息", "配置", "profile.removed", "已清除保存的登录信息并暂停重连。"); return new(true, "登录信息已清除，现有网络连接不受影响。", State);
             case "clearLogs": log.Clear(); log.Write("信息", "日志", "logs.cleared", "历史日志已清除。"); return new(true, "历史日志已清除，新的后台事件仍会继续记录。", State);
             default: return new(false, "不支持的操作。", State);
         }

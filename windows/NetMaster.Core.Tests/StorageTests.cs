@@ -18,6 +18,33 @@ internal sealed class TestDirectory : IDisposable
 
 public sealed class StorageTests
 {
+    [Fact]
+    public void ExplicitResetDoesNotBackUpDamagedCredentials()
+    {
+        using var folder = new TestDirectory(); var storage = new AppStorage(folder.PathName);
+        AppStorage.AtomicWrite(Path.Combine(storage.DataDirectory, "settings.json"), "{ damaged fixture }");
+        storage = new AppStorage(folder.PathName);
+        storage.Save(new(), null, preserveRecovery: false);
+        Assert.Null(storage.Profile); Assert.Null(storage.Error);
+        Assert.Empty(Directory.EnumerateFiles(storage.DataDirectory, "*.recovery-*"));
+    }
+
+    [Fact]
+    public void SettingsAndLocationAreCommittedTogetherAndInvalidTargetPreservesBoth()
+    {
+        using var folder = new TestDirectory(); var storage = new AppStorage(Path.Combine(folder.PathName, "home"));
+        storage.Save(new(), FakeProfile);
+        var original = storage.DataDirectory; var occupied = Path.Combine(folder.PathName, "occupied");
+        Directory.CreateDirectory(Path.Combine(occupied, "NetMaster-WinUI"));
+        File.WriteAllText(Path.Combine(occupied, "NetMaster-WinUI", "keep.txt"), "fixture");
+        var updated = new Settings { IntervalSeconds = 30, Theme = 2 };
+        Assert.Throws<IOException>(() => storage.MoveTo(occupied, updated));
+        Assert.Equal(original, storage.DataDirectory); Assert.Equal(new Settings(), new AppStorage(storage.Home).Settings);
+        storage.MoveTo(Path.Combine(folder.PathName, "target"), updated);
+        var restored = new AppStorage(storage.Home);
+        Assert.Equal(updated, restored.Settings); Assert.Equal(storage.DataDirectory, restored.DataDirectory); Assert.Equal(FakeProfile, restored.Profile);
+    }
+
     internal static LoginProfile FakeProfile => new() { Payload = "userId=fixture-user&password=fixture-secret&service=fixture", Confirmed = true };
 
     [Fact]

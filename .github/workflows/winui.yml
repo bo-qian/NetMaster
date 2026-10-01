@@ -17,6 +17,8 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Test isolated business logic
         run: dotnet test windows/NetMaster.Core.Tests/NetMaster.Core.Tests.csproj --logger trx -v:minimal
+      - name: Test portal interception and layout
+        run: node --test tools/tests/portal-capture.test.cjs tools/tests/portal-layout.test.cjs
       - name: Build development app without packaging
         run: dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -p:WindowsPackageType=None -p:GenerateAppxPackageOnBuild=false -p:OutDir=${{ github.workspace }}/windows/NetMaster.WinUI/bin/ci-preview/ -v:minimal
       - uses: actions/upload-artifact@v4

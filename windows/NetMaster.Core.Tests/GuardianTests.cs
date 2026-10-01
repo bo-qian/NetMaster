@@ -37,10 +37,10 @@ internal sealed class EngineHost : IAsyncDisposable
     private readonly Task run;
     public AppStorage Storage { get; }
     public FakeNetwork Network { get; }
-    public EngineHost(FakeNetwork? network = null, bool legacyRunning = false)
+    public EngineHost(FakeNetwork? network = null, bool legacyRunning = false, Func<bool>? legacyCheck = null)
     {
         Storage = new(folder.PathName); Network = network ?? new();
-        engine = new(Storage, Network, () => legacyRunning, false); run = engine.RunAsync(lifetime.Token);
+        engine = new(Storage, Network, legacyCheck ?? (() => legacyRunning), false); run = engine.RunAsync(lifetime.Token);
     }
     public async Task<Reply> Send(Command command)
     {
@@ -60,6 +60,51 @@ internal sealed class EngineHost : IAsyncDisposable
 
 public sealed class GuardianTests
 {
+    [Fact]
+    public async Task BeginningConfigurationDeletesSavedCredentialsAndCancelDoesNotRestore()
+    {
+        await using var host = new EngineHost();
+        Assert.True((await host.Send(new() { Name = "saveProfile", Profile = StorageTests.FakeProfile })).Ok);
+        var started = await host.Send(new() { Name = "beginConfiguration" });
+        Assert.True(started.Ok); Assert.False(started.Snapshot!.HasProfile); Assert.False(started.Snapshot.Settings.AutoReconnect);
+        Assert.Null(new AppStorage(host.Storage.Home).Profile);
+        Assert.False((await host.Send(new() { Name = "validateCandidate" })).Ok);
+        Assert.Equal(0, host.Network.LoginCount);
+        var cancelled = await host.Send(new() { Name = "cancelConfiguration" });
+        Assert.True(cancelled.Ok); Assert.False(cancelled.Snapshot!.HasProfile); Assert.False(cancelled.Snapshot.Settings.AutoReconnect);
+        Assert.Null(new AppStorage(host.Storage.Home).Profile);
+        Assert.DoesNotContain(Directory.EnumerateFiles(host.Storage.DataDirectory), name => name.Contains("recovery") || name.EndsWith(".bak"));
+    }
+
+    [Fact]
+    public async Task AlreadyOnlineValidationKeepsSavedProfileAndDoesNotConfirmReplacement()
+    {
+        await using var host = new EngineHost(new() { Authentication = "alreadyOnline" });
+        Assert.True((await host.Send(new() { Name = "saveProfile", Profile = StorageTests.FakeProfile })).Ok);
+        var replacement = StorageTests.FakeProfile with { Payload = "userId=fixture-new&password=fixture-new-secret", Confirmed = false };
+        var result = await host.Send(new() { Name = "validate", Profile = replacement });
+        Assert.True(result.Ok);
+        Assert.Equal("alreadyOnline", result.Authentication!.State);
+        Assert.False(result.Authentication.Success);
+        Assert.Equal(StorageTests.FakeProfile, host.Storage.Profile);
+        Assert.False((await host.Send(new() { Name = "saveProfile", Profile = replacement })).Ok);
+        Assert.Equal(StorageTests.FakeProfile, new AppStorage(host.Storage.Home).Profile);
+    }
+
+    [Fact]
+    public async Task SaveEncryptsAndEnablesGuardWhenWindowsTaskIsAbsent()
+    {
+        var missingTask = "NetMaster_Missing_Test_" + Guid.NewGuid().ToString("N");
+        await using var host = new EngineHost(legacyCheck: () => StartupRegistration.FindTask(missingTask) is not null);
+        var saved = await host.Send(new() { Name = "saveProfile", Profile = StorageTests.FakeProfile });
+        Assert.True(saved.Ok, saved.Message);
+        Assert.True(saved.Snapshot!.HasProfile);
+        Assert.True(saved.Snapshot.Settings.AutoReconnect);
+        var restored = new AppStorage(host.Storage.Home);
+        Assert.Equal(StorageTests.FakeProfile, restored.Profile);
+        Assert.True(restored.Settings.AutoReconnect);
+        Assert.Equal(0, host.Network.LoginCount);
+    }
     [Fact]
     public async Task MalformedCredentialsAreRejectedWithoutTerminatingCommandServer()
     {
