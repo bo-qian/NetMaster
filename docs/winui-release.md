@@ -47,4 +47,11 @@ Microsoft Store 会在审核后为商店分发包重新签名。源码仓库生�
 
 上架后，符合条件的免费 MSIX 应用可以使用 Microsoft Store Web Installer：从产品网页或 Direct Store badge 下载轻量安装器，由 Store 下载并安装正式包。GitHub Release 可提供正式商店 / 官方安装入口；是否适合把安装器文件作为附件，需在产品上架后核对分发方式。独立离线 MSIX 附件的有效签名仍是单独的发布条件，不承诺商店自动给任意站外包签名。[官方安装器说明](https://learn.microsoft.com/en-us/windows/apps/distribute-through-store/how-to-use-store-web-installer-for-distribution)
 
-进入发布阶段再请用户完成：个人开发者注册 / 身份核验、应用名称与商店产品身份；随后关联 manifest、准备隐私说明 / 商店截图和提交素材，再完成审核与正式 Release。当前不需要提交个人资料。
+进入发布阶段由用户完成：个人开发者注册 / 身份核验、应用名称与商店产品身份；随后关联 manifest、准备隐私说明 / 商店截图和提交素材，再完成审核与正式 Release。个人资料只在微软官方注册页面提交，不发送给项目仓库或助手。
+
+## 个人账号注册与签名说明（2026-10-01 核对）
+
+- 从 [Microsoft Store 开发者入口](https://storedeveloper.microsoft.com/) 的新流程开始，选 Individual developer，使用个人 Microsoft 账号，按页面完成证件与自拍核验；该新流程目前免注册费。避免从旧 Partner Center 或 Visual Studio 注册入口进入旧流程。[微软个人账号步骤](https://learn.microsoft.com/en-us/windows/apps/publish/partner-center/open-a-developer-account)
+- 账号就绪后，在 Partner Center 的 Apps & Games 中新建 MSIX/PWA 应用并预留 NetMaster 名称；在 Product identity 中获取商店分配的 Package/Identity/Name、Publisher、PublisherDisplayName，之后才关联项目 manifest。当前占位身份不能当作商店身份。[商店身份字段](https://learn.microsoft.com/en-us/windows/apps/publish/view-app-identity-details)
+- Store MSIX 通过审核后由微软重新签名；注册不会给开发者一张可导出、可用于任意站外包的签名证书。现有本机自签名开发测试证书也不是正式公开分发证书。若以后要在 GitHub Release 提供独立直装 MSIX，另需站外可信签名方案。[微软签名说明](https://learn.microsoft.com/en-us/windows/apps/publish/get-started)
+- 注册、预留名称可以先完成；实际关联身份、正式打包、上传与提交仍需先完成用户验收及发布前现场验证。个人证件、自拍和 Microsoft 账号凭据只在微软官方页面操作，不写入仓库。
