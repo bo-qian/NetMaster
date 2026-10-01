@@ -416,3 +416,7 @@ dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -v:m
 ### 2026-10-01 · 亮蓝圆角 S 标志方向
 
 品牌探索进一步收敛：用户要求只保留一个亮蓝色 S，像闪电但全部圆角，参考大型科技公司的极简审美。已生成单个连续圆角 S 概念，正式品牌 PNG / SVG 尚未替换，待用户确认后再落地并做小尺寸适配。
+
+### 2026-10-01 · 品牌蓝色候选
+
+圆角闪电 S 形态已获用户认可，当前进入颜色选择。首选品牌根色为明亮 Azure 蓝 `#1677FF`（NetMaster Blue），备选为 `#00A4F4`、`#0F6FEA`、`#386BFF`。尚未替换现有品牌资源；确认后应以 WinUI `SystemAccentColor` / ThemeResource 色阶统一应用界面、图标和后续软件品牌，避免各处使用不同蓝色。
