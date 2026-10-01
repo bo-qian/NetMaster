@@ -420,3 +420,7 @@ dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -v:m
 ### 2026-10-01 · 品牌蓝色候选
 
 圆角闪电 S 形态已获用户认可，当前进入颜色选择。首选品牌根色为明亮 Azure 蓝 `#1677FF`（NetMaster Blue），备选为 `#00A4F4`、`#0F6FEA`、`#386BFF`。尚未替换现有品牌资源；确认后应以 WinUI `SystemAccentColor` / ThemeResource 色阶统一应用界面、图标和后续软件品牌，避免各处使用不同蓝色。
+
+### 2026-10-01 · 品牌独立性修正
+
+用户明确品牌不再参考上海大学，NetMaster 需要作为个人开发者可长期延续的独立软件品牌。此前关于 SHU 的早期探索仅保留为历史记录，后续 logo、品牌蓝和视觉规范只围绕网络连接、稳定、效率与简约科技感设计。
