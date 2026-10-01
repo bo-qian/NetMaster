@@ -74,7 +74,7 @@ public sealed partial class MainWindow
             if (reply?.Ok == true)
             {
                 backgroundRemoved = true; FinishConfiguration(); UpdateConfiguration();
-                GuardStatus.Text = "已停止守护"; dialog.Hide();
+                SetGuardianStatus("已停止守护"); dialog.Hide();
             }
         });
         dialog.PrimaryButtonClick += async (_, args) =>
@@ -112,7 +112,7 @@ public sealed partial class MainWindow
                 finally
                 {
                     SetBusy(false); dialog.IsPrimaryButtonEnabled = true; dialog.IsSecondaryButtonEnabled = true;
-                    if (backgroundRemoved) GuardStatus.Text = "已停止守护";
+                    if (backgroundRemoved) SetGuardianStatus("已停止守护");
                     clearProfile.IsEnabled = snapshot?.HasProfile == true || configurationActive;
                     clearLogs.IsEnabled = remove.IsEnabled = choose.IsEnabled = true;
                 }

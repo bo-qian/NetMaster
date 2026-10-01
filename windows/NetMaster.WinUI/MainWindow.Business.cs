@@ -90,7 +90,7 @@ public sealed partial class MainWindow
         catch (OperationCanceledException) when (closed) { return null; }
         catch (Exception ex) when (ex is IOException or TimeoutException or OperationCanceledException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or JsonException)
         {
-            if (!closed) { GuardStatus.Text = "后台未连接"; NetworkStatus.Text = "状态待重新确认"; Notice("未收到后台确认，请检查安装或稍后重试。当前操作是否生效需重新读取状态。", true); }
+            if (!closed) { SetGuardianStatus("后台未连接"); NetworkStatus.Text = "状态待重新确认"; NetworkStatus.Tone = StatusTone.Caution; Notice("未收到后台确认，请检查安装或稍后重试。当前操作是否生效需重新读取状态。", true); }
             return null;
         }
     }
@@ -122,9 +122,10 @@ public sealed partial class MainWindow
         try
         {
             NetworkStatus.Text = value.Network.State switch { "online" => "已连接互联网", "authentication" => "需要认证", "offline" => "网络未连接", "uncertain" => "检测未通过", _ => "尚未检测" };
+            NetworkStatus.Tone = value.Network.State switch { "online" => StatusTone.Success, "offline" => StatusTone.Critical, "authentication" or "uncertain" => StatusTone.Caution, _ => StatusTone.Neutral };
             OverviewAccount.Text = "配置账号：" + value.Account;
             LastCheck.Text = "上次检测：" + (value.Network.State == "unknown" ? "暂无" : value.Network.CheckedAt.ToLocalTime().ToString("HH:mm:ss"));
-            GuardStatus.Text = backgroundRemoved ? "已停止守护" : speedMeasuring && value.Guardian == "重连暂缓" ? "测速中，重连暂缓" : value.Guardian;
+            SetGuardianStatus(backgroundRemoved ? "已停止守护" : speedMeasuring && value.Guardian == "重连暂缓" ? "测速中，重连暂缓" : value.Guardian);
             ReconnectToggle.IsOn = value.Settings.AutoReconnect; ReconnectToggle.IsEnabled = value.HasProfile && !busy;
             IntervalLabel.Text = $"检测间隔：{value.Settings.IntervalSeconds} 秒";
             UpdateConfiguration();
@@ -140,7 +141,7 @@ public sealed partial class MainWindow
     }
     private async void Detect_Click(object sender, RoutedEventArgs e)
     {
-        if (busy) return; SetBusy(true); NetworkStatus.Text = "正在检测";
+        if (busy) return; SetBusy(true); NetworkStatus.Text = "正在检测"; NetworkStatus.Tone = StatusTone.Working;
         try { await SendAsync(new Command { Name = "detect" }); }
         finally { SetBusy(false); }
     }
@@ -312,7 +313,8 @@ public sealed partial class MainWindow
             var directory = snapshot.DataDirectory;
             var entries = await Task.Run(() => logReader.Read(directory), windowLifetime.Token);
             if (closed) return;
-            RecentLogs.Text = entries.Count == 0 ? "暂无日志。" : string.Join("\n", entries.Take(2).Select(e => e.Display));
+            RecentLogs.ItemsSource = entries.Take(2).ToArray();
+            RecentLogsEmpty.Visibility = entries.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             if (LiveLogs.IsOn || force) { allLogs = entries; FilterLogs(false); }
         }
         catch (OperationCanceledException) when (closed) { }
@@ -371,6 +373,9 @@ public sealed partial class MainWindow
         if (LogDetails is null) return;
         var selected = LogList.SelectedItem as LogEntry;
         LogDetails.Text = selected?.Details ?? "选择一条记录以查看详细信息。"; CopyLogButton.IsEnabled = selected is not null;
+        DetailLevel.Visibility = selected is null ? Visibility.Collapsed : Visibility.Visible;
+        DetailLevel.Text = selected?.Level ?? "";
+        DetailLevel.Tone = selected?.Level switch { "错误" => StatusTone.Critical, "警告" => StatusTone.Caution, "信息" => StatusTone.Attention, _ => StatusTone.Neutral };
     }
     private void CopyLog_Click(object sender, RoutedEventArgs e)
     {

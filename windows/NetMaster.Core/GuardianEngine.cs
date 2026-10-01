@@ -135,8 +135,9 @@ public sealed class GuardianEngine : IDisposable
                 profile.Validate();
                 var auth = await network.LoginAsync(profile, ct);
                 await DetectAsync(ct);
-                log.Write(auth.State == "rejected" ? "警告" : "信息", "认证", "login.validate", auth.Message);
-                return new(auth.Success || auth.State == "alreadyOnline", auth.Message, State, auth);
+                var testMessage = AuthenticationText.ConfigurationTest(auth, c.Profile is not null);
+                log.Write(auth.Success ? "信息" : "警告", "配置测试", c.Profile is not null ? "configuration.test" : "profile.test", testMessage);
+                return new(auth.Success || auth.State == "alreadyOnline", testMessage, State, auth);
             case "saveProfile":
                 if (c.Profile is not { Confirmed: true } p) return new(false, "请先完成一次成功的网页认证或验证登录。", State);
                 if (legacyTaskRunning()) return new(false, "旧版守护仍在运行，请先在旧版暂停守护，避免重复登录。", State);
@@ -189,7 +190,7 @@ public sealed class GuardianEngine : IDisposable
                         {
                             guardian = "重连中"; PublishState(); log.Write("信息", "守护", "reconnect.begin", "正在尝试恢复校园网连接。");
                             var result = await network.LoginAsync(storage.Profile, operation.Token);
-                            log.Write(result.State == "rejected" ? "警告" : "信息", "守护", "reconnect.result", result.Message);
+                            log.Write(result.Success || result.State == "alreadyOnline" ? "信息" : "警告", "守护", "reconnect.result", AuthenticationText.Reconnect(result));
                             if (result.State == "rejected") rejected = true;
                             await Task.Delay(2000, operation.Token); await DetectAsync(operation.Token);
                             failures = lastNetwork.State == "online" ? 0 : Math.Min(failures + 1, 6);

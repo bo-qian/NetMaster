@@ -24,15 +24,17 @@ public sealed class ConfigurationSession
         Stage = profile.Confirmed ? ConfigurationStage.ReadyToSave : ConfigurationStage.Captured;
     }
     public bool Validate() { if (!CanValidate) return false; Stage = ConfigurationStage.Validating; Message = null; Error = false; return true; }
-    public void Authentication(AuthResult result)
+    public void Authentication(AuthResult result, bool fromTest = false)
     {
         if (!Active || Candidate is null || Stage == ConfigurationStage.Saving) return;
         if (result.Success) Candidate = Candidate with { Confirmed = true, VerifiedAt = DateTimeOffset.Now };
         else if (result.State == "rejected") Candidate = Candidate with { Confirmed = false, VerifiedAt = null };
         Stage = Candidate.Confirmed ? ConfigurationStage.ReadyToSave : ConfigurationStage.Captured;
         Message = result.State == "alreadyOnline"
-            ? Candidate.Confirmed ? "本次信息已验证，可保存；学校返回账号已在线。" : "账号已在线，本次信息尚未验证。请重新认证。"
-            : result.Success ? null : result.Message;
+            ? Candidate.Confirmed ? fromTest ? "本次测试未取得新的验证结果，之前验证仍有效，可保存。" : "本次信息已验证，可保存；学校返回账号已在线。"
+                : fromTest ? result.Message : "账号已在线，本次信息尚未验证。请重新认证。"
+            : result.Success ? fromTest ? result.Message : null
+                : result.Message + (fromTest && Candidate.Confirmed ? "之前验证仍有效，可保存。" : "");
         Error = !result.Success && result.State != "alreadyOnline";
     }
     public bool Save() { if (!CanSave) return false; Stage = ConfigurationStage.Saving; Message = null; Error = false; return true; }

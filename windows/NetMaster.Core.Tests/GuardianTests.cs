@@ -60,6 +60,39 @@ internal sealed class EngineHost : IAsyncDisposable
 
 public sealed class GuardianTests
 {
+    [Theory]
+    [InlineData(true, "success", "信息", "测试成功")]
+    [InlineData(false, "success", "信息", "测试成功")]
+    [InlineData(true, "alreadyOnline", "警告", "测试未完成")]
+    [InlineData(false, "rejected", "警告", "测试失败")]
+    public async Task ConfigurationTestsNameTheirContextAndDoNotSave(bool candidate, string result, string level, string expected)
+    {
+        await using var host = new EngineHost(new() { Authentication = result });
+        if (!candidate) host.Storage.Save(host.Storage.Settings, StorageTests.FakeProfile);
+        var reply = await host.Send(new() { Name = candidate ? "validateCandidate" : "validate", Profile = candidate ? StorageTests.FakeProfile with { Confirmed = false } : null });
+        Assert.Contains(expected, reply.Message);
+        Assert.StartsWith(candidate ? "本次校园网配置" : "已保存的校园网配置", reply.Message);
+        Assert.Equal(result, reply.Authentication!.State);
+        Assert.Equal(!candidate, new AppStorage(host.Storage.Home).Profile is not null);
+        var entry = Assert.Single(LogStore.Read(host.Storage.DataDirectory), e => e.Event == (candidate ? "configuration.test" : "profile.test"));
+        Assert.Equal("配置测试", entry.Source); Assert.Equal(level, entry.Level); Assert.Equal(reply.Message, entry.Message);
+        Assert.DoesNotContain(LogStore.Read(host.Storage.DataDirectory), e => e.Event == "profile.saved");
+    }
+
+    [Fact]
+    public void TestMessagesDoNotClaimSavedOrOnlineAndPreserveVerifiedCandidateOnInconclusiveTest()
+    {
+        var session = new ConfigurationSession(); session.Begin(); session.Receive(StorageTests.FakeProfile with { Confirmed = false });
+        var success = new AuthResult("success", AuthenticationText.ConfigurationTest(new("success", "fixture"), true));
+        session.Authentication(success, fromTest: true);
+        Assert.Contains("测试成功", session.Message); Assert.Contains("尚未保存", session.Message); Assert.True(session.CanSave);
+        session.Authentication(new("alreadyOnline", "fixture"), fromTest: true);
+        Assert.Contains("未取得新的验证结果", session.Message); Assert.True(session.CanSave);
+        var reconnect = AuthenticationText.Reconnect(new("success", "fixture"));
+        Assert.Contains("自动重连认证成功", reconnect); Assert.Contains("正在确认", reconnect);
+        Assert.DoesNotContain("已连接互联网", reconnect);
+    }
+
     [Fact]
     public async Task BeginningConfigurationDeletesSavedCredentialsAndCancelDoesNotRestore()
     {

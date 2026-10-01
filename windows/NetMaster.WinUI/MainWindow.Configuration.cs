@@ -20,7 +20,7 @@ public sealed partial class MainWindow
             ConfigurationStage.SigningOut => "正在下线，等待学校确认…",
             ConfigurationStage.WaitingForLogin => "请在下方网页输入账号和密码，完成登录。",
             ConfigurationStage.Captured => "已获取本次信息。等待认证结果，或点击测试本次配置。",
-            ConfigurationStage.Validating => "正在验证本次登录信息…",
+            ConfigurationStage.Validating => "正在测试本次配置…",
             ConfigurationStage.ReadyToSave => "本次登录信息已验证，点击保存并启用守护。",
             ConfigurationStage.Saving => "正在保存登录信息并启用守护…",
             ConfigurationStage.SaveFailed => "登录信息尚未保存，点击重试保存。",
@@ -32,8 +32,8 @@ public sealed partial class MainWindow
             ConfigurationStage.SigningOut => "正在重新认证",
             ConfigurationStage.WaitingForLogin => "等待登录",
             ConfigurationStage.Captured => "等待验证",
-            ConfigurationStage.Validating => "正在验证",
-            ConfigurationStage.ReadyToSave => "验证成功，等待保存",
+            ConfigurationStage.Validating => "正在测试配置",
+            ConfigurationStage.ReadyToSave => configuration.Error ? "本次测试未完成" : configuration.Message?.StartsWith("本次校园网配置测试成功") == true ? "测试通过，等待保存" : "验证成功，等待保存",
             ConfigurationStage.Saving => "正在保存",
             ConfigurationStage.SaveFailed => "保存失败，等待重试",
             _ => saved ? "配置已完成" : "尚未配置"
@@ -52,6 +52,11 @@ public sealed partial class MainWindow
             Notice(configuration.Message ?? instruction, true, "配置未完成");
         }
         LoginState.Text = configurationActive ? ConfigurationState.Text : saved ? "配置已完成" : "尚未配置";
+        LoginState.Tone = configurationActive
+            ? configuration.Error ? candidate?.Confirmed == true && stage == ConfigurationStage.ReadyToSave ? StatusTone.Caution : StatusTone.Critical
+                : stage is ConfigurationStage.ReadyToSave ? StatusTone.Success
+                : stage is ConfigurationStage.Preparing or ConfigurationStage.SigningOut or ConfigurationStage.Validating or ConfigurationStage.Saving ? StatusTone.Working : StatusTone.Caution
+            : saved ? StatusTone.Success : StatusTone.Neutral;
         LoginAccount.Text = configurationActive
             ? candidate is null ? "本次账号：尚未获取" : "本次账号：" + Protocol.Mask(candidate.Account)
             : "当前配置账号：" + (snapshot?.Account ?? "未获取");
@@ -81,7 +86,7 @@ public sealed partial class MainWindow
         if (configurationActive)
         {
             OverviewAccount.Text = "本次配置进行中，尚未保存";
-            GuardStatus.Text = "配置中，重连暂缓";
+            SetGuardianStatus("配置中，重连暂缓");
         }
         UpdateResponsiveLayout();
     }
@@ -230,11 +235,15 @@ public sealed partial class MainWindow
             if (validatingSession)
             {
                 if (!ReferenceEquals(candidate, validating)) return;
-                if (reply?.Authentication is { } auth) configuration.Authentication(auth);
+                if (reply?.Authentication is { } auth)
+                {
+                    configuration.Authentication(auth with { Message = reply.Message }, fromTest: true);
+                    if (auth.Success || auth.State == "alreadyOnline") Notice(configuration.Message ?? reply.Message, title: "配置测试");
+                }
                 else configuration.Fail(reply?.Message ?? "未收到验证结果，请重试测试本次配置。");
             }
             else if (reply?.Authentication is { } auth)
-                Notice(auth.Success ? "当前保存配置测试成功。" : auth.State == "alreadyOnline" ? "当前账号已在线，配置保持不变；断网恢复仍需实际验证。" : auth.Message, !auth.Success && auth.State != "alreadyOnline");
+                Notice(reply.Message, !auth.Success && auth.State != "alreadyOnline", "配置测试");
             else Notice(reply?.Message ?? "未收到当前配置的测试结果。", true);
         }
         finally { SetBusy(false); }
