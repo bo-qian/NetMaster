@@ -26,6 +26,8 @@ if ($families.Count -ne 1 -or $families[0] -ne 'Windows.Desktop') {
 }
 $sourceManifest.Package.Identity.Name = [string]$storeIdentity.Name
 $sourceManifest.Package.Identity.Publisher = [string]$storeIdentity.Publisher
+$storeVersion = '2.0.0.0'
+$sourceManifest.Package.Identity.Version = $storeVersion
 $sourceManifest.Package.Properties.PublisherDisplayName = [string]$storeIdentity.PublisherDisplayName
 $identity = $sourceManifest.Package.Identity
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
@@ -55,8 +57,9 @@ function Test-Payload([IO.Compression.ZipArchive]$archive) {
     try { [xml]$manifest = $reader.ReadToEnd() } finally { $reader.Dispose() }
     if ($manifest.Package.Identity.Name -ne $identity.Name -or
         $manifest.Package.Identity.Publisher -ne $identity.Publisher -or
+        $manifest.Package.Identity.Version -ne $storeVersion -or
         $manifest.Package.Properties.PublisherDisplayName -ne $sourceManifest.Package.Properties.PublisherDisplayName) {
-        throw '生成的 MSIX 身份与 Partner Center 对应的源 manifest 不一致。'
+        throw '生成的 MSIX 身份或版本与本次商店配置不一致。'
     }
     $packagedFamilies = @($manifest.Package.Dependencies.TargetDeviceFamily | ForEach-Object { $_.Name })
     if ($packagedFamilies.Count -ne 1 -or $packagedFamilies[0] -ne 'Windows.Desktop') {

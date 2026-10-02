@@ -537,3 +537,10 @@
 - 决定 / 改动：`Package.appxmanifest` 限定 `Windows.Desktop` 并移除旧 PhoneIdentity；`Build-StorePackage.ps1` 在缺少商店身份或身份仍为占位时拒绝打包，使用每次独立输出目录防止误取旧包，并核查两个包内的身份、设备家族、后台文件和启动声明。WinUI 项目只在商店构建参数存在时选用生成的独立 manifest；源码 manifest 仍供本地开发，不会被商店身份覆盖。新增 `docs/privacy-policy.md`，依据当前代码说明校园网认证参数、本地 DPAPI 保存、WebView2 数据、公共联网检测与 Cloudflare 测速流量，并明确学校 HTTP 接口的传输限制；更新发布和交接文档以反映用户已验收及仍待核查的边界流程。
 - 验证：本轮 Core 75 项、网页脚本 11 项通过；WinUI x64 无包构建 0 错误 / 0 警告；PowerShell 脚本语法与 `git diff --check` 通过。MSBuild 分别查询普通构建与提供商店参数时的 AppxManifest，前者保持源码文件，后者仅选指定文件。使用 `-AfterAcceptance` 试运行打包脚本按预期因缺少正式身份而停止，未生成正式候选包。本轮未现场断网、重新登录、升级 / 卸载或验证新构建后台能否通过 Smart App Control。隐私说明是待公开和复核的草稿，尚无商店可填的正式 HTTPS 地址。
 - 接续：等待用户复制 Product identity 的 Package/Identity/Name、Publisher、PublisherDisplayName；填入 `StoreIdentity.json` 后构建候选并实际核对 `.msixupload`，再完成商店素材和提交前检查。未上传 Partner Center、未提交审核或发布 GitHub Release。
+
+### 2026-10-02 · 确定 WinUI 首发版本为 2.0.0
+
+- 需求 / 问题：用户希望 WinUI 重构版首次上线使用 2.0.0，以区别旧 Python 版的 1.0.0。
+- 决定 / 改动：对外版本与计划中的 GitHub Release 标签采用 `v2.0.0`；`Build-StorePackage.ps1` 生成商店专用 manifest 时设置并核查 MSIX 四段包版本 `2.0.0.0`。本地开发包仍维持独立身份和递增序号，不修改已安装 `NetMaster.LocalDevelopment 1.0.0.37`。更新 `docs/winui-release.md` 与 `docs/winui-handoff.md`。
+- 验证：核对微软当前 MSIX 包版本规则及应用关于页从已安装包身份读取版本的代码；PowerShell 脚本语法与 `git diff --check` 通过。尚无商店身份字段，因此未生成、安装或运行 2.0.0.0 包。
+- 接续：取得 Partner Center 三个身份字段后构建正式候选包，检查产物身份、版本和运行文件，再准备商店提交；未发布 GitHub Release。

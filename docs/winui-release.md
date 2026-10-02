@@ -2,6 +2,8 @@
 
 发布路线：Microsoft Store 的 MSIX。用户已在 Partner Center 建立 `NetMaster 校园网助手` 草稿产品，并于 2026-10-02 确认当前开发版的本地验收没有问题，同意进入下一步。源码 `Package.appxmanifest` 保留本机开发身份；商店打包时会从 `windows/NetMaster.WinUI/StoreIdentity.json` 生成独立 manifest。该文件要填写商店分配的三个身份字段，目前尚未取得；个人身份核验具体状态未独立检查。正式商店提交与公开 GitHub Release 均尚未进行。
 
+**首发版本：** 用户指定 WinUI 新版对外以 **v2.0.0** 上线，与 Python 旧版 1.0.0 区分。Microsoft Store 候选 MSIX 的四段包版本固定为 **2.0.0.0**，第四段为 0；GitHub Release 标记和版本说明使用 **v2.0.0**。源码 manifest 与已安装的 `NetMaster.LocalDevelopment 1.0.0.37` 属于独立开发身份，不据此判断正式包的版本。后续更新必须递增商店包版本，不能重复提交相同版本。
+
 当前顺序：取得 Partner Center“产品标识”的 Package/Identity/Name、Package/Identity/Publisher、Package/Properties/PublisherDisplayName → 关联包身份并保持本地开发包独立 → 用 `Build-StorePackage.ps1 -AfterAcceptance` 生成候选并核对包内身份、文件和设备家族 → 补齐商店页面、隐私说明公开 URL 与截图 → 在 Partner Center 上传并检查预检结果 → 用户检查最终页面后提交审核。用户验收的是当前运行版；真实断网恢复、Windows 登录后自启、升级 / 卸载及新构建后台组件的运行策略仍未在本轮独立验证，不将构建通过等同于这些检查通过。
 
 **验收关口：** 用户此前要求先看实际运行效果，确认后再打包；2026-10-02 已明确确认当前开发版验收没有问题。`-AfterAcceptance` 现可用于候选包，但脚本会在缺少商店身份文件或其内容仍为占位时拒绝打包。此前生成的未签名测试素材不发布、不安装。CI 仍只测试和构建开发版。

@@ -2,6 +2,8 @@
 
 最后更新：2026-10-02（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
 
+**正式首发版本（2026-10-02）：** 用户确定 WinUI 重构版对外从 **v2.0.0** 开始，以区别 Python 旧版 1.0.0。商店候选包的 `Package/Identity/Version` 为 **2.0.0.0**（MSIX 四段版本，第四段留 0），GitHub Release 标签计划为 **v2.0.0**。`Build-StorePackage.ps1` 在商店专用 manifest 中设置并核查此版本；源码开发 manifest 和本机 `NetMaster.LocalDevelopment 1.0.0.37` 不改。当前未取得商店身份字段，尚未生成或运行 2.0.0.0 候选包。
+
 **当前发布接续（2026-10-02）：** 用户已在本机查看 `NetMaster.LocalDevelopment 1.0.0.37` 并明确回复“验收没问题，可以开始下一步了”。这解除正式候选包的用户验收关口，但不代表每项现场边界情形均已独立验证。Partner Center 的 `NetMaster 校园网助手` 产品仍为草稿；正在等待用户复制 Product identity 的 Package/Identity/Name、Publisher、PublisherDisplayName，尚未生成本产品的正式候选包。源码 manifest 保留开发身份；`StoreIdentity.json` 提供正式字段时，打包脚本在忽略目录生成商店专用 manifest，不覆盖开发身份。脚本已加缺失 / 占位身份拦截、独立输出目录与包内身份 / Desktop 家族核查，源 manifest 已限定 Desktop；75 项 Core、11 项网页脚本和 x64 无包构建通过。新增 [隐私说明草稿](privacy-policy.md)，提交前需要公开 HTTPS 地址并核对实际内容。尚未上传、提交、上架或创建 GitHub Release。下一步取得三字段后构建并检查候选包。
 
 **Visual Studio F5 构建修复（2026-10-02）：** 用户按 F5 后 WinUI 复制阶段找不到 `NetMaster.Worker` 的 runtimeconfig、apphost 和 deps 输出；当时 `Worker/bin/Debug/.../win-x64` 未生成。`NetMaster.WinUI.csproj` 的 `IncludeWorker` 现显式构建 Worker 后再取得路径并复制，覆盖 VS 仅构建启动项目而未先产生 Worker 文件的情况。模拟 `BuildProjectReferences=false` 且先清理 Worker 输出时，目标可重新生成文件；WinUI x64 常规构建 0 错误。**未重新执行 Visual Studio F5 的部署 / 调试全过程**，新构建后台组件仍可能被本机 Smart App Control 拦截。本机已安装的 `NetMaster.LocalDevelopment 1.0.0.37` 保持 Status=Ok，重新启动后 UI 与 Worker 进程均来自该安装目录；继续以此作为用户验收入口。
