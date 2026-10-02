@@ -4,7 +4,7 @@
 
 **首发版本：** 用户指定 WinUI 新版对外以 **v2.0.0** 上线，与 Python 旧版 1.0.0 区分。Microsoft Store 候选 MSIX 的四段包版本固定为 **2.0.0.0**，第四段为 0；GitHub Release 标记和版本说明使用 **v2.0.0**。源码 manifest 与已安装的 `NetMaster.LocalDevelopment 1.0.0.37` 属于独立开发身份，不据此判断正式包的版本。后续更新必须递增商店包版本，不能重复提交相同版本。
 
-当前顺序：取得 Partner Center“产品标识”的 Package/Identity/Name、Package/Identity/Publisher、Package/Properties/PublisherDisplayName → 关联包身份并保持本地开发包独立 → 用 `Build-StorePackage.ps1 -AfterAcceptance` 生成候选并核对包内身份、文件和设备家族 → 补齐商店页面、隐私说明公开 URL 与截图 → 在 Partner Center 上传并检查预检结果 → 用户检查最终页面后提交审核。用户验收的是当前运行版；真实断网恢复、Windows 登录后自启、升级 / 卸载及新构建后台组件的运行策略仍未在本轮独立验证，不将构建通过等同于这些检查通过。
+当前顺序：产品标识已取得、包身份已关联、`Build-StorePackage.ps1 -AfterAcceptance` 候选包已核查 → 复核 [商店列表草稿](store-listing-draft.md)、[隐私说明](privacy-policy.md) 与真实截图 → 在 Partner Center 上传并检查预检结果 → 核对仍待独立验证的运行边界 → 用户检查最终页面后提交审核。用户验收的是当前运行版；真实断网恢复、Windows 登录后自启、升级 / 卸载及新构建后台组件的运行策略仍未在本轮独立验证，不将构建通过等同于这些检查通过。
 
 **当前候选包（2026-10-02）：** 产物位于本机忽略目录 `windows/NetMaster.WinUI/bin/store-packages-x64/20261002-105154-9d1e136b/NetMaster.WinUI_2.0.0.0_x64.msixupload`，大小 75,749,505 字节，SHA-256 `A068910105D98164C77A348D53659D0508A2294A39CA995624E8B8F37DA8DA48`。构建脚本核查了主 MSIX 和上传包内主 MSIX：Name `BoQian.NetMaster`、Publisher `CN=3A8E9608-D9F3-48BD-BC94-F877AEC6081D`、PublisherDisplayName `Bo Qian`、Version `2.0.0.0`、唯一目标家族 `Windows.Desktop`，以及 UI、Worker、Core、.NET 文件与 StartupTask。首次核查误把 4 个 Windows App Runtime 依赖 MSIX 算作主包；选择规则已改为精确匹配 `NetMaster.WinUI_2.0.0.0_x64.msix` 后整段脚本通过。此包未签名，只能作为 Partner Center 审核素材；未安装、未上传，不能据此声称新构建后台通过本机 Smart App Control。
 
