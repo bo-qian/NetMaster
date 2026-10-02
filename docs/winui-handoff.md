@@ -4,19 +4,19 @@
 
 **正式首发版本（2026-10-02）：** 用户确定 WinUI 重构版对外从 **v2.0.0** 开始，以区别 Python 旧版 1.0.0。商店包版本为 **2.0.0.0**，GitHub Release 标签计划为 **v2.0.0**。修正后的 x64 商店上传包已通过 Partner Center 包预检；未在本机安装或运行该版本。源码开发 manifest 和本机 `NetMaster.LocalDevelopment 1.0.0.37` 不改。
 
-**当前发布接续（2026-10-02）：** 用户已在本机查看 `NetMaster.LocalDevelopment 1.0.0.37` 并明确回复“验收没问题，可以开始下一步了”，但真实断网恢复、登录后自启、升级 / 卸载以及新构建后台组件在本机 Smart App Control 下运行仍无独立现场证据。Partner Center 的 `NetMaster 校园网助手` **Submission 1 仍为草稿**：首包因安装显示名未预留被拒；商店专用 manifest 改为已预留的完整显示名，重建包现通过微软包预检。用户已确定免费、全球所有市场、审核通过后手动发布；属性、隐私说明、`runFullTrust` 理由、IARC 全球 3+、简中与英语（美国）商店列表及获准的真实日志页截图均已填入。认证测试说明如实说明校园门户仅校园网可访问、暂无专用测试账号，重新打开页面确认说明保留。重新进入分级详情已见到 IARC 分级 ID；定价页仍保存全球 / 免费。总览加载中曾显示送审按钮禁用，稳定后按钮可用，尽管定价和年龄行未展示完成徽标。下一步让用户审阅最终草稿，**得到其明确同意后才提交认证**。尚未正式送审、发布商店或创建 GitHub Release。候选包路径、SHA-256 与风险详见 [发布说明](winui-release.md)。
+**当前发布接续（2026-10-02）：** 用户已在本机查看 `NetMaster.LocalDevelopment 1.0.0.37` 并确认可以进入发布准备；真实断网恢复、登录后自启、升级 / 卸载以及新构建后台组件在本机 Smart App Control 下运行仍无独立现场证据。Partner Center 的 `NetMaster 校园网助手` **Submission 1 已正式提交认证**：用户审阅最终草稿后明确同意，页面显示“正在认证”，提交完成、预处理进行中（第 2/4 步）；尚未得到微软审核结果。送审包是修正过安装显示名并通过包预检的 x64 `2.0.0.0`；商店资料为免费、全球所有市场、审核通过后手动发布，含简中 / 英语列表、真实日志截图、IARC 全球 3+、隐私和受限校园网络认证说明。审核可能要求学校允许的专用测试环境 / 账号，目前未具备。下一步跟进审核反馈；通过后仍需用户决定手动公开发布，再验证商店安装入口并创建 GitHub `v2.0.0` Release。已写 [Release 文案草稿](release-notes-v2.0.0-draft.md)。商店尚未公开，候选包未在本机安装运行。候选包路径、SHA-256 与风险详见 [发布说明](winui-release.md)。
 
 **Visual Studio F5 构建修复（2026-10-02）：** 用户按 F5 后 WinUI 复制阶段找不到 `NetMaster.Worker` 的 runtimeconfig、apphost 和 deps 输出；当时 `Worker/bin/Debug/.../win-x64` 未生成。`NetMaster.WinUI.csproj` 的 `IncludeWorker` 现显式构建 Worker 后再取得路径并复制，覆盖 VS 仅构建启动项目而未先产生 Worker 文件的情况。模拟 `BuildProjectReferences=false` 且先清理 Worker 输出时，目标可重新生成文件；WinUI x64 常规构建 0 错误。**未重新执行 Visual Studio F5 的部署 / 调试全过程**，新构建后台组件仍可能被本机 Smart App Control 拦截。本机已安装的 `NetMaster.LocalDevelopment 1.0.0.37` 保持 Status=Ok，重新启动后 UI 与 Worker 进程均来自该安装目录；继续以此作为用户验收入口。
 
-**商店产品已建立（2026-10-02）：** 用户在 Partner Center 创建了 MSIX/PWA 草稿产品，页面显示名称 `NetMaster 校园网助手`、状态“处于草稿状态”。此前单独 `NetMaster` 不可预留，用户确认这不是本账号已有预留。商店名称已定，应用内仍沿用 NetMaster 品牌；Product identity 已由用户截图提供并写入商店专用配置，源码 manifest 保留开发占位身份。草稿建立不等于应用提交、审核通过或发布；预留名称应在微软规定期限内使用。
+**商店产品已建立（2026-10-02）：** 用户在 Partner Center 创建 `NetMaster 校园网助手` MSIX/PWA 产品，并于同日提交 Submission 1 认证。此前单独 `NetMaster` 不可预留，用户确认这不是本账号已有预留。商店名称已定，应用内仍沿用 NetMaster 品牌；Product identity 已由用户截图提供并写入商店专用配置，源码 manifest 保留开发占位身份。提交认证不等于审核通过或公开发布。
 
-**注册与签名：** 用户已能在 Partner Center 建立上述草稿产品；个人身份核验的具体状态未独立检查。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。`.p12` / `.pfx` 只是可能含证书和私钥的文件格式，来源不明的转售文件不能当作本人的可信代码签名；不为此购买。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。商店身份已关联且生成未签名候选包，尚未提交。详见 [发布说明](winui-release.md)。
+**注册与签名：** 用户已能在 Partner Center 建立产品并提交认证；个人身份核验的具体状态未独立检查。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。`.p12` / `.pfx` 只是可能含证书和私钥的文件格式，来源不明的转售文件不能当作本人的可信代码签名；不为此购买。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。详见 [发布说明](winui-release.md)。
 
-**新版使用说明（本轮）：** 根 `README.md` 已改为版本入口，`windows/README.md` 已改为 WinUI 面向用户的使用指南，只说明首次配置、联网与守护、测速、日志、更换账号、设置及数据区别，不再放 Visual Studio / `dotnet` 源码构建步骤。历史 Python 版仍由 `windows/legacy/README.md` 单独说明。WinUI 仍在发布前验收，README 未提供不存在的正式安装链接；没有修改应用逻辑或生成安装包。
+**新版使用说明：** 根 `README.md` 是版本入口，`windows/README.md` 是 WinUI 面向用户的使用指南，只说明首次配置、联网与守护、测速、日志、更换账号、设置及数据区别，不放 Visual Studio / `dotnet` 源码构建步骤。历史 Python 版仍由 `windows/legacy/README.md` 单独说明。两份 README 已标注 v2.0.0 认证中，正式安装链接等上架后补入。
 
 **仓库目录（本轮整理）：** `windows/` 现在是 WinUI 发布主线入口，包含 `NetMaster.WinUI/`、`NetMaster.Worker/`、`NetMaster.Core/` 和测试；原 Python Windows 版的六个文件已整体移到 `windows/legacy/`，其 README 单独保留。根 README 与 `windows/README.md` 已改为主线介绍，历史 Release 的 `NetMaster.exe` 标为 Python 旧版；Linux 目录不变。WinUI 与旧版仍使用独立数据，目录整理没有安装、升级或迁移用户配置。WinUI x64 构建、Core 75 项及网页脚本 11 项通过，旧版 Python 因此机无 Python 解释器未做启动测试。`docs/dev-log.md` 的历史记录保留原路径作为当时事实，不批量改写。
 
-**发布讨论（尚未发布）：** 以 Microsoft Store 的 MSIX 为首发安装与更新渠道；GitHub Release 放版本说明和商店安装入口，免费上架后可核对 Store Web Installer。仓库生成的未签名 MSIX / msixupload 不作为站外安装包；若以后要提供离线直装 MSIX，须另行解决可信签名与更新。Partner Center 草稿已接收通过预检的身份匹配 x64 候选包，尚未提交认证。详见 [发布说明](winui-release.md)。
+**发布讨论（尚未发布）：** 以 Microsoft Store 的 MSIX 为首发安装与更新渠道；GitHub Release 放版本说明和商店安装入口，免费上架后可核对 Store Web Installer。仓库生成的未签名 MSIX / msixupload 不作为站外安装包；若以后要提供离线直装 MSIX，须另行解决可信签名与更新。Partner Center 已接收通过预检的身份匹配 x64 候选包并开始认证，尚未通过审核或公开发布。详见 [发布说明](winui-release.md)。
 
 **当前本机预览（覆盖后面的历史版本说明）：** `NetMaster.LocalDevelopment 1.0.0.37` 已安装并实际运行。它包含最新 WinUI（设置三个按钮横排、关于 NetMaster 的仓库 / Issues 入口、后台连接失败时的配置保护），与 1.0.0.29 起源码未改变且此前现场运行正常的 Core / Worker 二进制组合。实际概览显示“已连接互联网 / 守护运行中”，配置页在 1.0.0.36 读到原有已保存状态，1.0.0.37 未重复点开配置页。设置对话框现按可用窗口尺寸固定宽高；展开“关于”前后边界不移动，内容可以独立滚动，滚动条一侧预留 20 DIP 空白。桌面“NetMaster 开发测试”入口图标同步到当前包。未现场点击重新配置、下线、清除数据或保存设置。
 
