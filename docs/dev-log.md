@@ -530,3 +530,10 @@
 - 定位 / 改动：失败时 `windows/NetMaster.Worker/bin/Debug/net8.0-windows/win-x64` 未生成；WinUI 原 `IncludeWorker` 只查询 `GetTargetPath` 后复制，未保证 VS 启动项目构建先产出 Worker。`windows/NetMaster.WinUI/NetMaster.WinUI.csproj` 现显式构建 Worker 后再取路径。未改认证、守护逻辑或用户配置。
 - 验证：先清理生成的 Worker x64 输出，再模拟 `BuildProjectReferences=false` 执行 IncludeWorker，Worker 自动生成成功；WinUI x64 常规构建 0 警告 / 0 错误。原开发测试包 1.0.0.37 仍 Status=Ok，重新启动后 UI 和 Worker 进程路径均属于该安装包。未执行 VS F5 的实际部署 / 调试，也未据此认定新后台组件获 Smart App Control 允许。
 - 接续：用户用“NetMaster 开发测试”继续验收；将来若需 F5 调试新二进制，须分别验证打包部署、UI / Worker 通信及本机运行策略。
+
+### 2026-10-02 · 用户验收后准备商店候选包
+
+- 需求 / 问题：用户确认当前本机开发版验收没有问题，要求继续下一步；已建立 Partner Center 草稿产品，但尚未提供产品标识页的三个包身份字段。
+- 决定 / 改动：`Package.appxmanifest` 限定 `Windows.Desktop` 并移除旧 PhoneIdentity；`Build-StorePackage.ps1` 在商店身份仍为占位时拒绝打包，使用每次独立输出目录防止误取旧包，并核查两个包内的身份、设备家族、后台文件和启动声明。新增 `docs/privacy-policy.md`，依据当前代码说明校园网认证参数、本地 DPAPI 保存、WebView2 数据、公共联网检测与 Cloudflare 测速流量，并明确学校 HTTP 接口的传输限制；更新发布和交接文档以反映用户已验收及仍待核查的边界流程。
+- 验证：本轮 Core 75 项、网页脚本 11 项通过；WinUI x64 无包构建 0 错误 / 0 警告；PowerShell 脚本语法与 `git diff --check` 通过。使用 `-AfterAcceptance` 试运行打包脚本按预期在占位身份处停止，未生成正式候选包。本轮未现场断网、重新登录、升级 / 卸载或验证新构建后台能否通过 Smart App Control。隐私说明是待公开和复核的草稿，尚无商店可填的正式 HTTPS 地址。
+- 接续：等待用户复制 Product identity 的 Package/Identity/Name、Publisher、PublisherDisplayName；关联身份时保持本机开发包独立，构建候选并实际核对 `.msixupload`，再完成商店素材和提交前检查。未上传 Partner Center、未提交审核或发布 GitHub Release。

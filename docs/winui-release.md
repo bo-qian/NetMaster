@@ -1,10 +1,12 @@
 # WinUI 验证与发布
 
-发布路线：Microsoft Store 的 MSIX。用户已在 Partner Center 建立 `NetMaster 校园网助手` 草稿产品；仍须先完成软件验收再准备正式提交。当前 manifest 的 Identity / Publisher 是开发占位，未关联商店产品身份；个人身份核验具体状态未独立检查。
+发布路线：Microsoft Store 的 MSIX。用户已在 Partner Center 建立 `NetMaster 校园网助手` 草稿产品，并于 2026-10-02 确认当前开发版的本地验收没有问题，同意进入下一步。当前 manifest 的 Identity / Publisher 仍是开发占位，尚未取得并关联商店分配的三个身份字段；个人身份核验具体状态未独立检查。正式商店提交与公开 GitHub Release 均尚未进行。
 
-**最新用户要求：先看实际运行效果并验收功能，确认符合想法后再打包。** 已生成的本地未签名测试素材不发布、不安装，不作为验收成品；此后停止打包。CI 已改为只测试和构建开发版。
+当前顺序：取得 Partner Center“产品标识”的 Package/Identity/Name、Package/Identity/Publisher、Package/Properties/PublisherDisplayName → 关联包身份并保持本地开发包独立 → 用 `Build-StorePackage.ps1 -AfterAcceptance` 生成候选并核对包内身份、文件和设备家族 → 补齐商店页面、隐私说明公开 URL 与截图 → 在 Partner Center 上传并检查预检结果 → 用户检查最终页面后提交审核。用户验收的是当前运行版；真实断网恢复、Windows 登录后自启、升级 / 卸载及新构建后台组件的运行策略仍未在本轮独立验证，不将构建通过等同于这些检查通过。
 
-最新本机开发部署结果（2026-10-01）：用户要求实际解决预览后，已成功安装并运行自签名的 NetMaster.LocalDevelopment 测试 MSIX。SAC 保持开启。独立测试身份解决了同名 VS loose 注册导致的 0x80073CFB；原注册 / 数据保留。桌面和开始菜单入口为“NetMaster 开发测试”，用于本机验收。已查看三页、开始 / 取消配置及真实网页 / 日志，未完成真实认证保存或断网重连；不是正式发布。测试证书公钥已按系统管理员确认加入 TrustedPeople，私钥不可导出，30 天有效；证书与构建产物不提交 Git。不要再用旧的未打包 configuration-preview exe 作为本轮入口。
+**验收关口：** 用户此前要求先看实际运行效果，确认后再打包；2026-10-02 已明确确认当前开发版验收没有问题。`-AfterAcceptance` 现可用于候选包，但脚本会在商店身份仍为占位时拒绝打包。此前生成的未签名测试素材不发布、不安装。CI 仍只测试和构建开发版。
+
+本机开发部署历史（2026-10-01）：已成功安装并运行自签名的 NetMaster.LocalDevelopment 测试 MSIX。SAC 保持开启。独立测试身份解决了同名 VS loose 注册导致的 0x80073CFB；原注册 / 数据保留。桌面和开始菜单入口为“NetMaster 开发测试”，用于本机验收。测试证书公钥已按系统管理员确认加入 TrustedPeople，私钥不可导出，30 天有效；证书与构建产物不提交 Git。其后用户已确认当前开发版可进入发布准备，具体边界测试仍按上文标注。
 
 本机测试部署调研（2026-10-01）：微软推荐 MSIX 本地开发使用自签名证书与显式信任；这与正式发布签名是不同阶段。[官方指南](https://learn.microsoft.com/en-us/windows/msix/package/sign-msix-package-guide)。当前用户只要求调研，尚未生成 / 安装自签名测试包。另台电脑为远程使用，不安排其断网 / 注销测试。本机开发者模式已开启，SAC 仍启用；MSIX 能安装不等于所有组件能通过 SAC 运行检查。官方 SAC 签名要求采用受信任提供者证书，自签名不能作为本次拦截的确定修复。[SAC 签名要求](https://learn.microsoft.com/en-us/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control)。
 
@@ -24,11 +26,11 @@ dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -p:W
 
 GitHub Actions 配置仅测试和构建开发版，不打包、不创建 Release、不发布商店；远端 CI 尚未执行。
 
-取得用户明确验收确认后才运行 `./tools/Build-StorePackage.ps1 -Architecture x64 -AfterAcceptance`；脚本未带确认参数会在构建前停止。这不是当前接续任务。
+用户已明确确认验收；取得并关联实际商店包身份后，运行 `./tools/Build-StorePackage.ps1 -Architecture x64 -AfterAcceptance`。脚本未带确认参数或使用占位身份会在构建前停止。每次构建使用独立输出目录，避免误取旧包；核查源 / 包内身份、Desktop 设备家族和必要运行文件。候选 `.msixupload` 只供 Partner Center 上传审核，不是已签名的站外安装包。
 
 安装品牌素材来自仓库定稿 PNG / ICO，可用 `./tools/Generate-BrandAssets.ps1` 重新生成各尺寸磁贴及启动图。
 
-## 发布前仍需实际验收
+## 发布前仍需独立核查的边界流程
 
 | 流程 | 当前证据 | 仍需验证 |
 |---|---|---|
@@ -47,7 +49,7 @@ Microsoft Store 会在审核后为商店分发包重新签名。源码仓库生�
 
 上架后，符合条件的免费 MSIX 应用可以使用 Microsoft Store Web Installer：从产品网页或 Direct Store badge 下载轻量安装器，由 Store 下载并安装正式包。GitHub Release 可提供正式商店 / 官方安装入口；是否适合把安装器文件作为附件，需在产品上架后核对分发方式。独立离线 MSIX 附件的有效签名仍是单独的发布条件，不承诺商店自动给任意站外包签名。[官方安装器说明](https://learn.microsoft.com/en-us/windows/apps/distribute-through-store/how-to-use-store-web-installer-for-distribution)
 
-进入发布阶段由用户完成：个人开发者注册 / 身份核验、应用名称与商店产品身份；随后关联 manifest、准备隐私说明 / 商店截图和提交素材，再完成审核与正式 Release。个人资料只在微软官方注册页面提交，不发送给项目仓库或助手。
+用户已建立草稿产品；目前等待用户从“产品标识”复制三个非秘密包身份字段。仓库已准备 [WinUI 隐私说明草稿](privacy-policy.md)，提交前须将其发布为可公开访问的 HTTPS 页面并核对页面内容、截图及最终商店资料。个人资料只在微软官方页面提交，不发送给项目仓库或助手。
 
 ## 个人账号注册与签名说明（2026-10-01 核对）
 
@@ -55,4 +57,4 @@ Microsoft Store 会在审核后为商店分发包重新签名。源码仓库生�
 - 用户已在 Partner Center 的 Apps & Games 中建成 MSIX/PWA 草稿产品 `NetMaster 校园网助手`（截图日期 2026-10-02）；单独 `NetMaster` 此前不可预留。商店产品名与安装后的包显示名分属不同字段；微软建议两者一致以免困惑，应用内仍可使用 NetMaster 品牌。下一步在 Product identity 中取得商店分配的 Package/Identity/Name、Publisher、PublisherDisplayName，再关联正式项目 manifest；当前占位身份不能当作商店身份。[名称预留规则](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/reserve-your-apps-name) · [列表与安装名](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/add-and-edit-store-listing-info) · [商店身份字段](https://learn.microsoft.com/en-us/windows/apps/publish/view-app-identity-details)
 - Store MSIX 通过审核后由微软重新签名；注册不会给开发者一张可导出、可用于任意站外包的签名证书。现有本机自签名开发测试证书也不是正式公开分发证书。若以后要在 GitHub Release 提供独立直装 MSIX，另需站外可信签名方案。[微软签名说明](https://learn.microsoft.com/en-us/windows/apps/publish/get-started)
 - `.p12` / `.pfx` 是 PKCS#12 文件格式，可能包含证书和私钥，并不表示证书具有受信任的代码签名用途或属于本开发者。不购买来源不明的转售文件作为正式签名；公开代码签名应在需要站外直装时，按届时适用条件直接向可信 CA 或合规签名服务申请。当前 Store MSIX 路线无需购买证书。[PKCS#12 规范](https://www.rfc-editor.org/info/rfc7292/) · [微软签名选项](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options)
-- 草稿产品已经建立；实际关联身份、正式打包、上传与提交仍需先完成用户验收及发布前现场验证。个人证件、自拍和 Microsoft 账号凭据只在微软官方页面操作，不写入仓库。
+- 草稿产品已经建立，用户已确认本地验收；实际关联身份、候选包构建、上传与提交仍待执行。个人证件、自拍和 Microsoft 账号凭据只在微软官方页面操作，不写入仓库。
