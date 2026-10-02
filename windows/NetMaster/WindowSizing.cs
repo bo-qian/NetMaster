@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using Microsoft.UI.Xaml;
 using Windows.Graphics;
 
-namespace NetMaster.WinUI;
+namespace NetMaster;
 
 /// <summary>Use a comfortable startup size while allowing smaller windows.</summary>
 internal sealed class WindowSizing

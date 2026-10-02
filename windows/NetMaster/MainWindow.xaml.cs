@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Hosting;
 using Windows.Graphics;
 using Windows.System;
 
-namespace NetMaster.WinUI;
+namespace NetMaster;
 
 public sealed partial class MainWindow : Window
 {

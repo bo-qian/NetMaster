@@ -35,8 +35,8 @@ public sealed class StorageTests
         using var folder = new TestDirectory(); var storage = new AppStorage(Path.Combine(folder.PathName, "home"));
         storage.Save(new(), FakeProfile);
         var original = storage.DataDirectory; var occupied = Path.Combine(folder.PathName, "occupied");
-        Directory.CreateDirectory(Path.Combine(occupied, "NetMaster-WinUI"));
-        File.WriteAllText(Path.Combine(occupied, "NetMaster-WinUI", "keep.txt"), "fixture");
+        Directory.CreateDirectory(Path.Combine(occupied, "NetMaster"));
+        File.WriteAllText(Path.Combine(occupied, "NetMaster", "keep.txt"), "fixture");
         var updated = new Settings { IntervalSeconds = 30, Theme = 2 };
         Assert.Throws<IOException>(() => storage.MoveTo(occupied, updated));
         Assert.Equal(original, storage.DataDirectory); Assert.Equal(new Settings(), new AppStorage(storage.Home).Settings);
@@ -122,7 +122,7 @@ public sealed class StorageTests
     {
         using var folder = new TestDirectory(); var storage = new AppStorage(Path.Combine(folder.PathName, "home"));
         storage.Save(new(), FakeProfile); var original = storage.DataDirectory;
-        var parent = Path.Combine(folder.PathName, "occupied"); var destination = Path.Combine(parent, "NetMaster-WinUI");
+        var parent = Path.Combine(folder.PathName, "occupied"); var destination = Path.Combine(parent, "NetMaster");
         Directory.CreateDirectory(destination); File.WriteAllText(Path.Combine(destination, "keep.txt"), "keep");
         Assert.Throws<IOException>(() => storage.MoveTo(parent));
         Assert.Throws<IOException>(() => storage.MoveTo(original));
@@ -139,6 +139,63 @@ public sealed class StorageTests
             Assert.Throws<IOException>(() => storage.MoveTo(parent));
         Assert.Equal(original, storage.DataDirectory); Assert.Empty(Directory.EnumerateDirectories(parent));
         storage.MoveTo(parent); Assert.Equal(FakeProfile, new AppStorage(storage.Home).Profile);
+    }
+
+    [Fact]
+    public void PreviousWindowsDefaultDataIsCopiedIntoNewHome()
+    {
+        using var folder = new TestDirectory();
+        var home = Path.Combine(folder.PathName, "NetMaster");
+        var previous = new AppStorage(Path.Combine(home, "WinUI"));
+        previous.Save(new Settings { AutoReconnect = true }, FakeProfile);
+        new LogStore(previous).Write("信息", "测试", "migration", "旧版记录");
+
+        var current = new AppStorage(home, previous.Home);
+        Assert.Equal(Path.Combine(home, "data"), current.DataDirectory);
+        Assert.Equal(FakeProfile, current.Profile);
+        Assert.True(current.Settings.AutoReconnect);
+        Assert.Single(LogStore.Read(current.DataDirectory));
+        Assert.True(File.Exists(Path.Combine(previous.DataDirectory, "settings.json")));
+    }
+
+    [Fact]
+    public void PreviousWindowsCustomDataGetsRenamedWithoutOverwritingExistingData()
+    {
+        using var folder = new TestDirectory();
+        var home = Path.Combine(folder.PathName, "NetMaster");
+        var previous = new AppStorage(Path.Combine(home, "WinUI"));
+        previous.Save(new(), FakeProfile);
+        var customParent = Path.Combine(folder.PathName, "custom");
+        var oldData = Path.Combine(customParent, "NetMaster-WinUI");
+        Directory.CreateDirectory(oldData);
+        File.Copy(Path.Combine(previous.DataDirectory, "settings.json"), Path.Combine(oldData, "settings.json"));
+        AppStorage.AtomicWrite(Path.Combine(previous.Home, "location.json"), JsonSerializer.Serialize(oldData));
+        var current = new AppStorage(home, previous.Home);
+        Assert.Equal(Path.Combine(customParent, "NetMaster"), current.DataDirectory);
+        Assert.Equal(FakeProfile, current.Profile);
+        Assert.True(File.Exists(Path.Combine(oldData, "settings.json")));
+
+        var replacement = new LoginProfile { Payload = "userId=another&password=fixture", Confirmed = true };
+        current.Save(new(), replacement);
+        Assert.Equal(replacement, new AppStorage(home, previous.Home).Profile);
+    }
+
+    [Fact]
+    public void OccupiedNewDataDirectoryKeepsPreviousCredentialsAvailable()
+    {
+        using var folder = new TestDirectory();
+        var home = Path.Combine(folder.PathName, "NetMaster");
+        var previous = new AppStorage(Path.Combine(home, "WinUI"));
+        previous.Save(new(), FakeProfile);
+        var destination = Path.Combine(home, "data");
+        Directory.CreateDirectory(destination);
+        File.WriteAllText(Path.Combine(destination, "keep.txt"), "unrelated");
+
+        var current = new AppStorage(home, previous.Home);
+        Assert.Equal(previous.DataDirectory, current.DataDirectory);
+        Assert.Equal(FakeProfile, current.Profile);
+        Assert.NotNull(current.Error);
+        Assert.Equal("unrelated", File.ReadAllText(Path.Combine(destination, "keep.txt")));
     }
 
     [Fact]

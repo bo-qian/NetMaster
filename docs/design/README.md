@@ -6,4 +6,4 @@
 - [校园网登录](campus-login-concept.png)：嵌入学校认证页面，右侧验证登录并保存 / 启用守护。图中认证页面是示意，实际随学校网页而变化。
 - [日志](logs-concept.png)：搜索、日期 / 级别筛选、实时更新、自动滚动、导出与选中记录详情。
 
-最新设计与接续状态以 [winui-handoff.md](../winui-handoff.md) 为准。图片不能替代可运行的 XAML 实现。
+最新设计与接续状态以 [windows-handoff.md](../windows-handoff.md) 为准。图片不能替代可运行的 XAML 实现。

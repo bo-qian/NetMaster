@@ -12,13 +12,26 @@ public sealed class AppStorage
     public Settings Settings { get; private set; } = new();
     public LoginProfile? Profile { get; private set; }
     public string? Error { get; private set; }
-    public static string DefaultHome => Environment.GetEnvironmentVariable("NETMASTER_HOME") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NetMaster", "WinUI");
-    public AppStorage(string? home = null)
+    public bool MigratedPreviousData { get; private set; }
+    public static string DefaultHome => Environment.GetEnvironmentVariable("NETMASTER_HOME") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NetMaster");
+    public AppStorage(string? home = null, string? legacyHome = null)
     {
         Home = Path.GetFullPath(home ?? DefaultHome);
         DataDirectory = Path.Combine(Home, "data");
         try
         {
+            // Explicit homes (including NETMASTER_HOME) are isolated. The default
+            // installation imports only its own previous Windows data, never Python data.
+            if (legacyHome is not null || home is null && Environment.GetEnvironmentVariable("NETMASTER_HOME") is null)
+            {
+                var previousHome = legacyHome ?? Path.Combine(Home, "WinUI");
+                try { MigratedPreviousData = MigratePreviousWindowsData(previousHome); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    DataDirectory = PreviousDataDirectory(previousHome);
+                    Error = "旧数据迁移未完成，当前继续使用原目录。请检查保存位置和可用空间。";
+                }
+            }
             if (File.Exists(Path.Combine(Home, "location.json"))) DataDirectory = JsonSerializer.Deserialize<string>(File.ReadAllText(Path.Combine(Home, "location.json"))) ?? DataDirectory;
             DataDirectory = Path.GetFullPath(DataDirectory);
             var config = Path.Combine(DataDirectory, "settings.json");
@@ -37,6 +50,47 @@ public sealed class AppStorage
             }
         }
         catch { Profile = null; Settings = new(); Error = "配置损坏或当前 Windows 用户无法读取凭证。原文件已保留，请重新获取登录信息后保存。"; }
+    }
+    private bool MigratePreviousWindowsData(string oldHome)
+    {
+        var index = Path.Combine(Home, "location.json");
+        if (File.Exists(index) || File.Exists(Path.Combine(DataDirectory, "settings.json"))) return false;
+        var oldData = PreviousDataDirectory(oldHome);
+        if (!File.Exists(Path.Combine(oldData, "settings.json")) && !Directory.Exists(Path.Combine(oldData, "logs"))) return false;
+        var custom = !oldData.Equals(Path.GetFullPath(Path.Combine(oldHome, "data")), StringComparison.OrdinalIgnoreCase);
+        var target = custom ? Path.Combine(Path.GetDirectoryName(oldData)!, "NetMaster") : DataDirectory;
+        target = Path.GetFullPath(target);
+        if (target.Equals(Home, StringComparison.OrdinalIgnoreCase)) target = DataDirectory;
+        if (target.Equals(oldData, StringComparison.OrdinalIgnoreCase) ||
+            Directory.Exists(target) && Directory.EnumerateFileSystemEntries(target).Any())
+            throw new IOException("新版数据目录已有文件，无法自动迁移。");
+        var staging = target + ".migration-" + Guid.NewGuid().ToString("N");
+        Directory.CreateDirectory(staging);
+        try
+        {
+            var config = Path.Combine(oldData, "settings.json");
+            if (File.Exists(config)) File.Copy(config, Path.Combine(staging, "settings.json"));
+            var logs = Path.Combine(oldData, "logs");
+            if (Directory.Exists(logs))
+            {
+                var destinationLogs = Path.Combine(staging, "logs");
+                Directory.CreateDirectory(destinationLogs);
+                foreach (var file in Directory.EnumerateFiles(logs, "????-??-??.jsonl"))
+                    File.Copy(file, Path.Combine(destinationLogs, Path.GetFileName(file)));
+            }
+            if (Directory.Exists(target)) Directory.Delete(target, false);
+            Directory.Move(staging, target);
+            if (custom) AtomicWrite(index, JsonSerializer.Serialize(target));
+            return true;
+        }
+        finally { if (Directory.Exists(staging)) Directory.Delete(staging, true); }
+    }
+    private static string PreviousDataDirectory(string oldHome)
+    {
+        var oldIndex = Path.Combine(oldHome, "location.json");
+        return Path.GetFullPath(File.Exists(oldIndex)
+            ? JsonSerializer.Deserialize<string>(File.ReadAllText(oldIndex)) ?? Path.Combine(oldHome, "data")
+            : Path.Combine(oldHome, "data"));
     }
     public void Save(Settings settings, LoginProfile? profile, bool preserveRecovery = true)
     {
@@ -63,11 +117,11 @@ public sealed class AppStorage
     {
         settings?.Validate();
         // Own one child directory; never move/delete the user's selected parent.
-        var destination = Path.GetFullPath(Path.Combine(parent, "NetMaster-WinUI"));
+        var destination = Path.GetFullPath(Path.Combine(parent, "NetMaster"));
         if (destination.Equals(DataDirectory, StringComparison.OrdinalIgnoreCase)) { if (settings is not null) Save(settings, Profile); return; }
         if (destination.StartsWith(DataDirectory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new IOException("不能把数据目录移入自身。");
         if (DataDirectory.StartsWith(destination.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || destination.Equals(Home, StringComparison.OrdinalIgnoreCase)) throw new IOException("不能使用包含当前应用数据的目录。");
-        if (Directory.Exists(destination) && Directory.EnumerateFileSystemEntries(destination).Any()) throw new IOException("目标 NetMaster-WinUI 目录已有数据，请选择其他位置。");
+        if (Directory.Exists(destination) && Directory.EnumerateFileSystemEntries(destination).Any()) throw new IOException("目标 NetMaster 目录已有数据，请选择其他位置。");
         Directory.CreateDirectory(parent);
         var staging = destination + ".migration-" + Guid.NewGuid().ToString("N");
         Directory.CreateDirectory(staging);

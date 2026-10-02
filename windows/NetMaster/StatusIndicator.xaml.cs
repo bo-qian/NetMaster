@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace NetMaster.WinUI;
+namespace NetMaster;
 
 public enum StatusTone { Neutral, Success, Attention, Working, Caution, Critical }
 

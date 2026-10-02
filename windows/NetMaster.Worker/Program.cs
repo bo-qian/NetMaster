@@ -13,7 +13,9 @@ internal static class Program
         if (!acquired) return;
         try
         {
-            using var engine = new GuardianEngine(new AppStorage(home));
+            // StartupTask has no --home argument; migrate previous Windows data
+            // before guarding, even when the main window is never opened.
+            using var engine = new GuardianEngine(homeIndex >= 0 ? new AppStorage(home) : new AppStorage());
             // Keep mutex ownership on the main thread for the full process lifetime.
             engine.RunAsync().GetAwaiter().GetResult();
         }

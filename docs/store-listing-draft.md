@@ -37,11 +37,11 @@ NetMaster 是面向上海大学校园网用户的 Windows 桌面工具。首次�
 
 ## 截图与图标
 
-- 只使用实际运行的 WinUI 页面，不使用 `docs/design/` 的概念图，也不制造连接成功、测速结果或日志。
+- 只使用实际运行的 Windows 应用页面，不使用 `docs/design/` 的概念图，也不制造连接成功、测速结果或日志。
 - Desktop 截图为 PNG，分辨率至少 1366 × 768，单张不超过 50 MB。至少 1 张，微软建议 4 张以上；仅上传实际支持的 Desktop 设备家族截图。
 - 用户已明确同意公开使用真实日志页截图。原始 `.png` 实际为 JPEG 编码，Partner Center 拒绝后已转换为真正 PNG：忽略目录 `windows/NetMaster.WinUI/bin/store-listing-review/logs-real-20261002-converted.png`，2048 × 1104，SHA-256 `47ABEA93488BEBC46FD3ECC56D5C22DB0D0EFB2D0A5E0478172971EA1FE86906`；简中和英语（美国）列表各上传一张。截图含运行时间与事件，不含完整账号或密码。
 - 后续可补概览、设置与配置页。概览虽已脱敏仍显示账号片段，配置页的内嵌学校网页可能显示完整账号；公开前必须逐张核对。截图中不应包含真实密码、令牌、完整账号、个人路径或可识别的私有日志。
-- 包中已有 NetMaster 图标，`windows/NetMaster.WinUI/Assets/Square150x150Logo.scale-200.png` 实际尺寸为 300 × 300，可作为 1:1 商店图标候选；上传前核对与应用包显示一致。不要使用学校或 Microsoft 的官方标志。
+- 包中已有 NetMaster 图标，`windows/NetMaster/Assets/Square150x150Logo.scale-200.png` 实际尺寸为 300 × 300，可作为 1:1 商店图标候选；上传前核对与应用包显示一致。不要使用学校或 Microsoft 的官方标志。
 
 ## 提交草稿待核对项
 

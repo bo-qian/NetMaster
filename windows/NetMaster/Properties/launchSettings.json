@@ -1,9 +1,9 @@
 {
   "profiles": {
-    "NetMaster.WinUI (Package)": {
+    "NetMaster (Package)": {
       "commandName": "MsixPackage"
     },
-    "NetMaster.WinUI (Unpackaged)": {
+    "NetMaster (Unpackaged)": {
       "commandName": "Project"
     }
   }

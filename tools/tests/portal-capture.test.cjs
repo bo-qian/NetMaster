@@ -4,9 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const script = fs.readFileSync(path.join(__dirname, '../../windows/NetMaster.WinUI/PortalCapture.js'), 'utf8');
+const script = fs.readFileSync(path.join(__dirname, '../../windows/NetMaster/PortalCapture.js'), 'utf8');
 const endpoint = 'http://10.10.9.9/eportal/InterFace.do?method=login';
-const accountScript = fs.readFileSync(path.join(__dirname, '../../windows/NetMaster.WinUI/PortalAccount.js'), 'utf8');
+const accountScript = fs.readFileSync(path.join(__dirname, '../../windows/NetMaster/PortalAccount.js'), 'utf8');
 function setup(origin = 'http://10.10.9.9') {
     const messages = [];
     class XHR {

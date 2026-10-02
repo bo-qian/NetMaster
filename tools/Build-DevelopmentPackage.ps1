@@ -19,8 +19,8 @@ if ($ReuseBackendFrom) {
         if ($LASTEXITCODE -ne 0) { throw 'Backend source changed since the trusted build; rebuild and verify the backend.' }
     }
 }
-$project = Join-Path $repoRoot 'windows/NetMaster.WinUI/NetMaster.WinUI.csproj'
-$manifestPath = Join-Path $repoRoot 'windows/NetMaster.WinUI/Package.appxmanifest'
+$project = Join-Path $repoRoot 'windows/NetMaster/NetMaster.csproj'
+$manifestPath = Join-Path $repoRoot 'windows/NetMaster/Package.appxmanifest'
 [xml]$manifest = Get-Content -LiteralPath $manifestPath -Raw
 $publisher = [string]$manifest.Package.Identity.Publisher
 $friendlyName = 'NetMaster local development test (30 days)'
@@ -37,7 +37,7 @@ $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer
 if (!(Test-Path -LiteralPath $vswhere)) { throw 'Visual Studio MSBuild is required.' }
 $msbuild = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
 if (!$msbuild) { throw 'Visual Studio MSBuild was not found.' }
-$developmentRoot = Join-Path $repoRoot 'windows/NetMaster.WinUI/bin/local-development'
+$developmentRoot = Join-Path $repoRoot 'windows/NetMaster/bin/local-development'
 $output = (Join-Path $developmentRoot 'output') + '/'
 $packages = (Join-Path $developmentRoot 'packages') + '/'
 New-Item -ItemType Directory -Path $developmentRoot -Force | Out-Null
@@ -60,14 +60,14 @@ $signtool = Join-Path $sdkTools.FullName 'x64/signtool.exe'
     "/p:NetMasterDevelopmentCertificateThumbprint=$($certificate.Thumbprint)" "/p:NetMasterDevelopmentSignTool=$signtool" `
     /p:AppxSymbolPackageEnabled=false /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never
 if ($LASTEXITCODE -ne 0) { throw "Development package build failed: $LASTEXITCODE" }
-$package = Get-ChildItem -LiteralPath $packages -Filter 'NetMaster.WinUI_*.msix' -File -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$package = Get-ChildItem -LiteralPath $packages -Filter 'NetMaster_*.msix' -File -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if (!$package) { throw 'Development MSIX was not generated.' }
 # Give the test installation its own identity so it can coexist with the
 # Visual Studio loose registration. The repository's manifest stays unchanged.
 $layout = Join-Path $developmentRoot ('layout-' + [guid]::NewGuid().ToString('N'))
 & $makeappx unpack /p $package.FullName /d $layout /o *> (Join-Path $developmentRoot 'unpack.log')
 if ($LASTEXITCODE -ne 0) { throw 'Development package extraction failed. See unpack.log.' }
-foreach ($binary in @('NetMaster.WinUI.exe', 'NetMaster.WinUI.dll', 'NetMaster.Worker.exe', 'NetMaster.Worker.dll', 'NetMaster.Core.dll')) {
+foreach ($binary in @('NetMaster.exe', 'NetMaster.dll', 'NetMaster.Worker.exe', 'NetMaster.Worker.dll', 'NetMaster.Core.dll')) {
     $binaryPath = Join-Path $layout $binary
     $binarySignature = Get-AuthenticodeSignature -LiteralPath $binaryPath
     if ($binarySignature.Status -ne 'Valid' -or $binarySignature.SignerCertificate.Thumbprint -ne $certificate.Thumbprint) {
@@ -113,7 +113,7 @@ if ($ReuseBackendFrom) {
     & $signtool sign /fd SHA256 /sha1 $certificate.Thumbprint $newCatalog *> $null
     if ($LASTEXITCODE -ne 0) { throw 'Updated development catalog signing failed.' }
     Copy-Item -LiteralPath $newCatalog -Destination $catalogPath
-    foreach ($binary in @('NetMaster.WinUI.exe', 'NetMaster.WinUI.dll', 'NetMaster.Core.dll', 'NetMaster.Worker.exe', 'NetMaster.Worker.dll')) {
+    foreach ($binary in @('NetMaster.exe', 'NetMaster.dll', 'NetMaster.Core.dll', 'NetMaster.Worker.exe', 'NetMaster.Worker.dll')) {
         & $signtool verify /pa /c $catalogPath (Join-Path $layout $binary) *> $null
         if ($LASTEXITCODE -ne 0) { throw "Updated catalog verification failed: $binary" }
     }
@@ -129,7 +129,7 @@ if (!$signature.SignerCertificate -or $signature.SignerCertificate.Thumbprint -n
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [IO.Compression.ZipFile]::OpenRead($package.FullName)
 try {
-    foreach ($name in @('NetMaster.WinUI.exe', 'NetMaster.WinUI.dll', 'NetMaster.Worker.exe', 'NetMaster.Worker.dll', 'NetMaster.Core.dll', 'coreclr.dll', 'AppxSignature.p7x')) {
+    foreach ($name in @('NetMaster.exe', 'NetMaster.dll', 'NetMaster.Worker.exe', 'NetMaster.Worker.dll', 'NetMaster.Core.dll', 'coreclr.dll', 'AppxSignature.p7x')) {
         if (!$archive.GetEntry($name)) { throw "Development package is missing $name" }
     }
 } finally { $archive.Dispose() }

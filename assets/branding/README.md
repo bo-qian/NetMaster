@@ -9,4 +9,4 @@ PNG 是当前正式视觉基准，标题栏、应用图标、任务栏、开始�
 
 当前主体边界为 960 × 924，居中于 1254 × 1254 画布，最大方向占比约 77%；透明边距用于保证小尺寸显示完整。这个比例是结合实际任务栏视觉比较选定的，并非 Windows 规定的固定值。
 
-更新主 PNG 后运行 `tools/Generate-BrandAssets.ps1`，会同步生成所有 WinUI PNG、标题栏图、ICO、SVG 和 16 / 32 像素检查图。
+更新主 PNG 后运行 `tools/Generate-BrandAssets.ps1`，会同步生成所有 Windows 应用 PNG、标题栏图、ICO、SVG 和 16 / 32 像素检查图。

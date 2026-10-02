@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $sourcePath = Join-Path $repoRoot 'assets/branding/netmaster-icon.png'
-$assetDirectory = Join-Path $repoRoot 'windows/NetMaster.WinUI/Assets'
+$assetDirectory = Join-Path $repoRoot 'windows/NetMaster/Assets'
 $source = [System.Drawing.Image]::FromFile($sourcePath)
 try {
     $assets = @(

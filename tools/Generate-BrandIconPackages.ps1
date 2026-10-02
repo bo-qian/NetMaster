@@ -65,5 +65,5 @@ try {
 }
 finally { $writer.Dispose(); $output.Dispose() }
 
-Copy-Item -LiteralPath $sourcePath -Destination (Join-Path $repoRoot 'windows/NetMaster.WinUI/Assets/NetMaster.png') -Force
+Copy-Item -LiteralPath $sourcePath -Destination (Join-Path $repoRoot 'windows/NetMaster/Assets/NetMaster.png') -Force
 Write-Host "Generated embedded SVG, $($sizes.Count)-size PNG ICO, and WinUI title-bar asset."

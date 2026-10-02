@@ -1,12 +1,12 @@
 # NetMaster Windows 旧版（Python）
 
-上海大学校园网自动登录守护程序的 Python + PySide6 旧版，保留供原用户和源码参考。Windows 后续发布主线是 [WinUI 3 版](../README.md)；这里的命令和界面只适用于旧版。
+上海大学校园网自动登录守护程序的 Python + PySide6 旧版，保留供原用户和源码参考。Windows 后续发布主线是 [当前 Windows 版](../README.md)；这里的命令和界面只适用于旧版。
 
 ## 快速开始
 
 ### 方式一：直接运行 EXE
 
-历史 [Releases](https://github.com/bo-qian/NetMaster/releases) 中的 `NetMaster.exe` 如存在，属于旧版；请核对对应版本说明。后续 WinUI 正式版会使用独立的发布入口。
+历史 [Releases](https://github.com/bo-qian/NetMaster/releases) 中的 `NetMaster.exe` 如存在，属于旧版；请核对对应版本说明。后续 Windows 正式版会使用独立的发布入口。
 
 ### 方式二：从源码运行
 

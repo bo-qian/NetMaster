@@ -18,7 +18,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
-namespace NetMaster.WinUI;
+namespace NetMaster;
 
 public sealed partial class MainWindow
 {
@@ -51,6 +51,24 @@ public sealed partial class MainWindow
         if (businessReady) return;
         businessReady = true;
         Notice("正在读取配置并连接后台…", title: "正在启动");
+        var previousWorkerShouldStop = localStorage.MigratedPreviousData;
+        if (!Packaged)
+        {
+            try
+            {
+                previousWorkerShouldStop |= await Task.Run(() => StartupRegistration.MigratePreviousRegistration(WorkerExecutable, localStorage.Home));
+            }
+            catch { Notice("旧版登录启动任务未能迁移，请在设置中重新开启登录后启动。", true); }
+        }
+        if (previousWorkerShouldStop)
+        {
+            try
+            {
+                var previous = new WorkerClient(Path.Combine(localStorage.Home, "WinUI"), WorkerExecutable);
+                await previous.SendAsync(new Command { Name = "shutdown" }, allowLaunch: false);
+            }
+            catch (IOException) { } // The former worker is already stopped.
+        }
         worker = new WorkerClient(localStorage.Home, WorkerExecutable);
         statusWorker = new WorkerClient(localStorage.Home, WorkerExecutable);
         LogList.ItemsSource = displayedLogs;
@@ -203,7 +221,7 @@ public sealed partial class MainWindow
             core.FrameCreated += (_, args) => RegisterPortalFrame(args.Frame);
             core.NavigationCompleted += async (_, args) => { UpdatePortalClip(); await PortalNavigatedAsync(args.IsSuccess); };
             core.NewWindowRequested += (_, args) => { args.Handled = true; if (configurationActive) configuration.Fail("网页请求打开新窗口，请使用外部浏览器入口检查页面。"); UpdateConfiguration(); };
-            using (var layoutStream = typeof(MainWindow).Assembly.GetManifestResourceStream("NetMaster.WinUI.PortalLayout.js") ?? throw new IOException("缺少网页适配脚本。"))
+            using (var layoutStream = typeof(MainWindow).Assembly.GetManifestResourceStream("NetMaster.PortalLayout.js") ?? throw new IOException("缺少网页适配脚本。"))
             using (var layoutReader = new StreamReader(layoutStream))
                 await core.AddScriptToExecuteOnDocumentCreatedAsync(await layoutReader.ReadToEndAsync());
             await InstallCaptureScriptAsync();
@@ -216,13 +234,13 @@ public sealed partial class MainWindow
     {
         var core = PortalWeb.CoreWebView2;
         if (captureScriptId.Length > 0) core.RemoveScriptToExecuteOnDocumentCreated(captureScriptId);
-        using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("NetMaster.WinUI.PortalCapture.js") ?? throw new IOException("缺少认证捕获脚本。");
+        using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("NetMaster.PortalCapture.js") ?? throw new IOException("缺少认证捕获脚本。");
         using var reader = new StreamReader(stream);
         captureScriptId = await core.AddScriptToExecuteOnDocumentCreatedAsync((await reader.ReadToEndAsync()).Replace("__NETMASTER_SESSION__", captureSession));
     }
     private async Task<string?> ReadPortalAccountAsync()
     {
-        using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("NetMaster.WinUI.PortalAccount.js") ?? throw new IOException();
+        using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("NetMaster.PortalAccount.js") ?? throw new IOException();
         using var reader = new StreamReader(stream);
         var script = await reader.ReadToEndAsync();
         var account = JsonSerializer.Deserialize<string>(await PortalWeb.CoreWebView2.ExecuteScriptAsync(script));

@@ -5,9 +5,9 @@ param(
 $ErrorActionPreference = 'Stop'
 if (!$AfterAcceptance) { throw '先运行开发版并取得用户的界面与功能验收确认，再使用 -AfterAcceptance 打包。' }
 $repoRoot = Split-Path $PSScriptRoot -Parent
-$project = Join-Path $repoRoot 'windows/NetMaster.WinUI/NetMaster.WinUI.csproj'
-$manifestPath = Join-Path $repoRoot 'windows/NetMaster.WinUI/Package.appxmanifest'
-$identityPath = Join-Path $repoRoot 'windows/NetMaster.WinUI/StoreIdentity.json'
+$project = Join-Path $repoRoot 'windows/NetMaster/NetMaster.csproj'
+$manifestPath = Join-Path $repoRoot 'windows/NetMaster/Package.appxmanifest'
+$identityPath = Join-Path $repoRoot 'windows/NetMaster/StoreIdentity.json'
 if (!(Test-Path -LiteralPath $identityPath -PathType Leaf)) {
     throw '尚未关联 Partner Center 的 Product identity：缺少 StoreIdentity.json。'
 }
@@ -40,8 +40,8 @@ if (!(Test-Path -LiteralPath $vswhere)) { throw '请安装 Visual Studio 的 Win
 $msbuild = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
 if (!$msbuild) { throw '找不到 Visual Studio MSBuild。' }
 $buildId = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
-$output = (Join-Path $repoRoot "windows/NetMaster.WinUI/bin/store-$Architecture/$buildId/") + [IO.Path]::DirectorySeparatorChar
-$packages = (Join-Path $repoRoot "windows/NetMaster.WinUI/bin/store-packages-$Architecture/$buildId/") + [IO.Path]::DirectorySeparatorChar
+$output = (Join-Path $repoRoot "windows/NetMaster/bin/store-$Architecture/$buildId/") + [IO.Path]::DirectorySeparatorChar
+$packages = (Join-Path $repoRoot "windows/NetMaster/bin/store-packages-$Architecture/$buildId/") + [IO.Path]::DirectorySeparatorChar
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 $storeManifestPath = Join-Path $output 'Package.Store.appxmanifest'
 $sourceManifest.Save($storeManifestPath)
@@ -51,13 +51,13 @@ $uploads = @(Get-ChildItem -LiteralPath $packages -Filter '*.msixupload' -Recurs
 if ($uploads.Count -ne 1) { throw "本次构建应生成一个商店上传文件，实际为 $($uploads.Count) 个。" }
 $upload = $uploads[0]
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$primaryPackageName = "NetMaster.WinUI_${storeVersion}_${Architecture}.msix"
+$primaryPackageName = "NetMaster_${storeVersion}_${Architecture}.msix"
 $msixes = @(Get-ChildItem -LiteralPath $packages -Filter $primaryPackageName -Recurse -File |
     Where-Object { $_.DirectoryName -notmatch '[\\/]Dependencies([\\/]|$)' })
 if ($msixes.Count -ne 1) { throw "本次构建应生成一个主应用 MSIX 文件，实际为 $($msixes.Count) 个。" }
 $msix = $msixes[0]
 function Test-Payload([IO.Compression.ZipArchive]$archive) {
-    foreach ($name in @('NetMaster.WinUI.exe', 'NetMaster.Worker.exe', 'NetMaster.Worker.dll', 'NetMaster.Worker.deps.json', 'NetMaster.Worker.runtimeconfig.json', 'NetMaster.Core.dll', 'System.Security.Cryptography.ProtectedData.dll', 'coreclr.dll', 'hostfxr.dll', 'hostpolicy.dll')) {
+    foreach ($name in @('NetMaster.exe', 'NetMaster.Worker.exe', 'NetMaster.Worker.dll', 'NetMaster.Worker.deps.json', 'NetMaster.Worker.runtimeconfig.json', 'NetMaster.Core.dll', 'System.Security.Cryptography.ProtectedData.dll', 'coreclr.dll', 'hostfxr.dll', 'hostpolicy.dll')) {
         if (!$archive.GetEntry($name)) { throw "MSIX 缺少运行文件：$name" }
     }
     $reader = [IO.StreamReader]::new($archive.GetEntry('AppxManifest.xml').Open())

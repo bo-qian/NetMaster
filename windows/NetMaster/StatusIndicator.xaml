@@ -1,4 +1,4 @@
-<UserControl x:Class="NetMaster.WinUI.StatusIndicator"
+<UserControl x:Class="NetMaster.StatusIndicator"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  x:Name="StatusRoot" IsTabStop="False" FontWeight="SemiBold">

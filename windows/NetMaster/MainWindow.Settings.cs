@@ -7,7 +7,7 @@ using NetMaster.Core;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
-namespace NetMaster.WinUI;
+namespace NetMaster;
 
 public sealed partial class MainWindow
 {
@@ -42,7 +42,7 @@ public sealed partial class MainWindow
         appDetails.Children.Add(new TextBlock { Text = GetAppVersionText(), Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"] });
         aboutHeader.Children.Add(appDetails);
         var aboutContent = new StackPanel { Spacing = 8 };
-        aboutContent.Children.Add(new TextBlock { Text = "校园网连接管理 · WinUI 版", TextWrapping = TextWrapping.Wrap });
+        aboutContent.Children.Add(new TextBlock { Text = "校园网连接管理", TextWrapping = TextWrapping.Wrap });
         aboutContent.Children.Add(new HyperlinkButton { Content = "GitHub · NetMaster", NavigateUri = new Uri("https://github.com/bo-qian/NetMaster"), HorizontalAlignment = HorizontalAlignment.Left });
         aboutContent.Children.Add(new HyperlinkButton { Content = "报告问题 / 提出建议", NavigateUri = new Uri("https://github.com/bo-qian/NetMaster/issues"), HorizontalAlignment = HorizontalAlignment.Left });
         aboutContent.Children.Add(new TextBlock { Text = "关闭主窗口后，已启用的后台守护会继续运行。登录后启动由概览中的独立开关控制。卸载请使用 Windows 应用设置。", TextWrapping = TextWrapping.Wrap });
@@ -73,7 +73,7 @@ public sealed partial class MainWindow
             {
                 var picker = new FolderPicker(); picker.FileTypeFilter.Add("*"); InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
                 var folder = await picker.PickSingleFolderAsync(); if (folder is null) return;
-                pendingLocation = folder.Path; path.Text = System.IO.Path.Combine(folder.Path, "NetMaster-WinUI");
+                pendingLocation = folder.Path; path.Text = System.IO.Path.Combine(folder.Path, "NetMaster");
                 status.Text = "新位置尚未生效。点击保存提交，取消可放弃。";
             }
             catch { status.Text = "无法选择保存位置。"; }

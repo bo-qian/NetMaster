@@ -4,7 +4,7 @@ using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
-namespace NetMaster.WinUI;
+namespace NetMaster;
 
 public sealed partial class MainWindow
 {

@@ -2,7 +2,7 @@
 
 ## 每次开始工作
 
-1. 阅读本文件、`docs/winui-handoff.md` 和 `docs/dev-log.md` 的最近记录。
+1. 阅读本文件、`docs/windows-handoff.md` 和 `docs/dev-log.md` 的最近记录。
 2. 检查 `git status --short --branch` 和实际项目文件，区分已经实现的功能与设计方案。
 3. 用户已决定将 WinUI 改版合并到 `main`，后续审核要求的修订直接在 `main` 开发。保留现有 Python Windows 版与 Linux 版。
 4. 换电脑接续前获取远端更新。工作区干净时可在 `main` 使用 `git pull --ff-only`；有未提交改动或分支分叉时先保留并处理这些改动，不要使用强制覆盖或丢弃来同步。
@@ -13,9 +13,9 @@
 - 记录简洁的摘要，不复制完整聊天。按发生顺序在文件末尾追加，每条使用日期及简短标题；日期按用户所在时区（默认 `Asia/Shanghai`）。
 - 记录本轮需求或问题、确定的决定、改动文件、验证结果、未完成事项和下一步。没有代码改动的讨论明确记录其结论即可。
 - 构建通过、实际运行、用户目测确认分别记录；不能把编译成功描述成已验证所有功能或动画。
-- 对当前状态、设计、优先级有实质改变时，同时更新 `docs/winui-handoff.md` 对应部分，让它一直反映最新可接续状态。
+- 对当前状态、设计、优先级有实质改变时，同时更新 `docs/windows-handoff.md` 对应部分，让它一直反映最新可接续状态。
 - 不在日志中记录真实密码、登录请求体、访问令牌、密钥或完整个人账号；截图中的个人数据也应遮盖。
-- 不另建每轮对话日志文件。日志始终维护在 `docs/dev-log.md`，开发交接始终维护在 `docs/winui-handoff.md`。
+- 不另建每轮对话日志文件。日志始终维护在 `docs/dev-log.md`，开发交接始终维护在 `docs/windows-handoff.md`。
 - 若当前环境无法写文件，明确说明本轮日志未保存，并在可写后补记。
 
 推荐记录格式：
@@ -32,7 +32,7 @@
 ## 已确定的 UI 与功能
 
 - 左侧主导航只保留：**概览、配置、日志**。原“校园网登录”页改为配置流程：首页显示“开始配置 / 重新配置”，引导获取、确认并保存登录信息；校园网网页只是配置步骤。测速仅放在概览，设置通过左下角导航齿轮进入（与主导航图标对齐）；关于信息放在设置内。
-- 以 `docs/design/` 的效果图作为视觉参考，以 `docs/winui-handoff.md` 的最新说明为准。概览原始效果图中的多余导航项不再实施。
+- 以 `docs/design/` 的效果图作为视觉参考，以 `docs/windows-handoff.md` 的最新说明为准。概览原始效果图中的多余导航项不再实施。
 - 使用 WinUI 3、原生控件、统一 Mica 背景和跟随系统的浅色 / 深色主题。品牌是 NetMaster，不添加微软官方关联或认证标识。
 - 标题栏和主体共用背景：保留 `ExtendsContentIntoTitleBar`、WinUI `TitleBar` 及透明的系统按钮背景，避免恢复独立原生标题栏造成主题或激活过渡不同步。
 - 网络是否在线与守护是否运行必须分别检测和展示，不能以后台进程运行判断联网成功。
@@ -45,7 +45,7 @@
 - 保存成功后保留顶部两张卡片和已打开的网页，右侧显示配置完成及已加密保存状态；结束捕获与临时重连暂停，不能因保留页面继续暂停守护。已有配置时首页也显示右侧配置状态，但仍不自动加载网页。
 - 重新认证采用 Python 的实际下线方式：应用内确认后读取学校网页当前账号，由 C# 向 /eportal/InterFace.do?method=logout POST userId，不依赖网页 userIndex / AuthInterFace 全局变量。校验结果后回到登录页；不能只点击网页按钮或仅发出请求就声称下线成功。
 - 保留旧版的凭证获取、配置验证、断网重连、检测间隔、Windows 登录后启动、日志保留天数、保存路径和移除后台任务能力。面向用户的操作使用清楚的名称，不暴露任务 XML 或部署命令。
-- WinUI 是独立重构版，只沿用 Python 的逻辑思路；不导入或共用旧版配置、凭证、日志。默认数据为 LocalAppData/NetMaster/WinUI，旧版原文件保留。
+- 当前 Windows 应用是独立重构版，只沿用 Python 的逻辑思路；不导入或共用 Python 旧版配置、凭证、日志。默认数据为 LocalAppData/NetMaster；从此前新版使用的 LocalAppData/NetMaster/WinUI 迁移本应用数据，原文件保留。
 - 日志页接收真实后台记录，支持搜索、日期 / 级别筛选、实时更新开关、自动滚动、详情、复制与导出。
 - 关闭主窗口后的后台守护、暂停守护、关闭自动启动和卸载应用是不同操作，行为和文案应明确。
 - 概念图内的账号、速度、时间、日志都是示例。真实功能接入前显示空状态或明确的预览状态，不能展示伪造的在线状态与测速结果。
@@ -53,17 +53,17 @@
 
 ## 代码与验证
 
-- 旧版代码与说明：`windows/legacy/`；WinUI 新版：`windows/NetMaster.WinUI/`、`windows/NetMaster.Worker/` 和 `windows/NetMaster.Core/`。新功能在新版项目内逐步接入，避免无关的大规模重写。
+- 旧版代码与说明：`windows/legacy/`；当前 Windows 应用：`windows/NetMaster/`、`windows/NetMaster.Worker/` 和 `windows/NetMaster.Core/`。新功能在当前项目内逐步接入，避免无关的大规模重写。
 - 当前项目目标是 `.NET 8`，Windows App SDK 引用以 `.csproj` 实际值为准。不要因为开发机器装了更新 SDK 就擅自升级目标框架或依赖。
 - 开发工具：Windows、Visual Studio 2026 的 WinUI 应用程序开发工作负载、WebView2 Runtime。WinUI 应在 Windows 环境编译和运行。
 - 修改 XAML / C# 后至少执行一次相关构建；涉及界面、标题栏或登录行为时做针对性的实际运行验证。只报告已执行的验证。
 - 发布顺序：先提供实际可运行的开发版，让用户查看三页效果并验收功能；用户明确确认符合要求后再生成正式安装包。CI 只做测试和开发版构建，不能自动打包或发布。Store 个人注册在接近正式发布时再提醒用户。
 - 本机验收可使用已获用户授权的自签名开发测试 MSIX 部署，采用独立 NetMaster.LocalDevelopment 身份与测试证书；这不构成正式发布或软件验收完成。不要用未打包 DLL 启动受阻来推断这种测试部署也不能运行，分别记录实际证据；正式发布仍等待用户确认。
-- 常规构建：`dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -v:minimal`。当前实例占用输出文件时可指定单独的临时 `OutDir`，不要强行结束用户的调试会话。
+- 常规构建：`dotnet build windows/NetMaster/NetMaster.csproj -p:Platform=x64 -v:minimal`。当前实例占用输出文件时可指定单独的临时 `OutDir`，不要强行结束用户的调试会话。
 - 不提交 `.vs/`、`bin/`、`obj/`、用户设置、运行时凭证、日志或私有签名证书。
 - 使用仓库已有的用户 Git 身份，不附加助手署名或共同作者信息。
 - 每个完成的开发阶段可保存提交；准备换电脑时将已验证的阶段与交接文档推送到 `main`。不改写已发布历史；认证修订不自动创建 Release 或发布商店版本。
 
 ## 新电脑的第一条提示词
 
-> 请先阅读 AGENTS.md、docs/winui-handoff.md 和 docs/dev-log.md 的最新记录，检查 main 分支和实际代码，然后从交接文件里的下一步继续开发。每轮对话结束前更新开发日志。
+> 请先阅读 AGENTS.md、docs/windows-handoff.md 和 docs/dev-log.md 的最新记录，检查 main 分支和实际代码，然后从交接文件里的下一步继续开发。每轮对话结束前更新开发日志。

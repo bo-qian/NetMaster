@@ -1,14 +1,14 @@
 # NetMaster
 
-上海大学校园网连接管理工具。Windows 新版使用 WinUI 3，Linux 版继续保留。
+上海大学校园网连接管理工具。Windows 版和 Linux 版继续维护。
 
-Windows WinUI 版提供校园网登录信息配置、断线自动恢复、登录后启动、网络测速和日志查看。联网状态与后台守护状态分别显示；登录信息按当前 Windows 用户加密保存。
+Windows 版提供校园网登录信息配置、断线自动恢复、登录后启动、网络测速和日志查看。联网状态与后台守护状态分别显示；登录信息按当前 Windows 用户加密保存。
 
 ## 使用说明
 
 | 版本 | 说明 | 状态 |
 | --- | --- | --- |
-| [Windows 新版](windows/README.md) | 配置校园网、查看连接与守护状态、测速、查阅日志 | v2.0.0 商店认证中，尚未公开上架 |
+| [Windows 版](windows/README.md) | 配置校园网、查看连接与守护状态、测速、查阅日志 | v2.0.0 商店认证中，尚未公开上架 |
 | [Windows 旧版](windows/legacy/README.md) | Python 版本的使用说明 | 保留供旧用户参考 |
 | [Linux 版](linux/README.md) | systemd 守护与终端界面 | 独立维护 |
 

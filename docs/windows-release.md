@@ -1,6 +1,8 @@
-# WinUI 验证与发布
+# NetMaster Windows 验证与发布
 
-发布路线：Microsoft Store 的 MSIX。用户已在 Partner Center 建立 `NetMaster 校园网助手` 产品，并于 2026-10-02 确认当前开发版的本地验收没有问题。用户审阅 Submission 1 后明确授权送审；已点击“提交进行认证”，Partner Center 显示**正在认证**，提交步骤完成、预处理正在进行（4 步中的第 2 步）。正式商店发布仍设为手动，尚未公开上架或创建 GitHub Release。个人身份核验具体状态未独立检查。
+**2026-10-02 重命名提示：** 当前源码项目与程序集已更名为 `windows/NetMaster/NetMaster.csproj`、`NetMaster.exe`，默认数据目录改为 `%LocalAppData%/NetMaster` 并迁移上一代 Windows 应用数据。x64 无包构建、Core 与网页脚本测试通过；独立自签名开发测试 MSIX 已生成并核查签名及包内文件，尚未安装运行。下面记载的已提交包路径与哈希是历史事实，仍属当前正在认证的旧包。新版须取得用户对实际运行的确认，再构建并验证新的 Store 包，才能替换送审包；商店 Name `BoQian.NetMaster`、Publisher 和已预留显示名不改。此时尚未替换包、认证未通过，也未手动发布。
+
+发布路线：Microsoft Store 的 MSIX。用户已在 Partner Center 建立 `NetMaster 校园网助手` 产品，并于 2026-10-02 确认当前开发版的本地验收没有问题。用户审阅 Submission 1 后明确授权送审；Partner Center 最近一次核对显示**正在认证**，提交步骤完成、预处理正在进行（4 步中的第 2 步）。用户另已决定立即合并 WinUI 源码，`feature/winui3-windows` 快进合并并推送到 `main`；后续审核修订在主线进行。正式商店发布仍设为手动，尚未公开上架或创建 GitHub Release。个人身份核验具体状态未独立检查。
 
 **首发版本：** 用户指定 WinUI 新版对外以 **v2.0.0** 上线，与 Python 旧版 1.0.0 区分。Microsoft Store 候选 MSIX 的四段包版本固定为 **2.0.0.0**，第四段为 0；GitHub Release 标记和版本说明使用 **v2.0.0**。源码 manifest 与已安装的 `NetMaster.LocalDevelopment 1.0.0.37` 属于独立开发身份，不据此判断正式包的版本。后续更新必须递增商店包版本，不能重复提交相同版本。
 
@@ -23,16 +25,16 @@
 ```powershell
 dotnet test windows/NetMaster.Core.Tests/NetMaster.Core.Tests.csproj -v:minimal
 node --test tools/tests/portal-capture.test.cjs tools/tests/portal-layout.test.cjs
-dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -p:WindowsPackageType=None -p:GenerateAppxPackageOnBuild=false -p:OutDir=./bin/acceptance-preview/ -v:minimal
+dotnet build windows/NetMaster/NetMaster.csproj -p:Platform=x64 -p:WindowsPackageType=None -p:GenerateAppxPackageOnBuild=false -p:OutDir=./bin/acceptance-preview/ -v:minimal
 ```
 
 测试使用随机临时目录、虚构凭证与可控 HTTP / 网络服务；DPAPI 和当前用户命名管道使用真实 Windows API。不会访问学校认证接口、自动注销账号、修改用户自启或生产配置。测试通过不能代替真实校园网和安装流程验收。
 
-打包脚本使用 Visual Studio MSBuild；当前开发机用 `dotnet build` 生成 StoreUpload 时，MSIX 工具出现符号转换及 System.Security.Permissions 依赖错误，使用 VS MSBuild 已通过。仍保持 .NET 8 与项目原有 Windows App SDK 版本。输出保存在被 Git 忽略的 `windows/NetMaster.WinUI/bin/store-packages-x64/`，包括 `.msixupload` 和未签名 `.msix`。脚本同时核对两个包内的 UI / Worker / Core、.NET 运行文件及 StartupTask 声明，缺失时构建失败。已修复初次打包遗漏 Worker.dll 的问题。不安装证书、不改安全策略、不自动提交商店。
+打包脚本使用 Visual Studio MSBuild；当前开发机用 `dotnet build` 生成 StoreUpload 时，MSIX 工具出现符号转换及 System.Security.Permissions 依赖错误，使用 VS MSBuild 已通过。仍保持 .NET 8 与项目原有 Windows App SDK 版本。输出保存在被 Git 忽略的 `windows/NetMaster/bin/store-packages-x64/`，包括 `.msixupload` 和未签名 `.msix`。脚本同时核对两个包内的 UI / Worker / Core、.NET 运行文件及 StartupTask 声明，缺失时构建失败。已修复初次打包遗漏 Worker.dll 的问题。不安装证书、不改安全策略、不自动提交商店。
 
 GitHub Actions 配置仅测试和构建开发版，不打包、不创建 Release、不发布商店；远端 CI 尚未执行。
 
-用户已明确确认验收；四个商店专用字段已写入 `windows/NetMaster.WinUI/StoreIdentity.json`，并通过 `./tools/Build-StorePackage.ps1 -Architecture x64 -AfterAcceptance` 生成上述候选包。脚本未带确认参数、缺少身份文件或使用占位身份都会在构建前停止。它从源码 manifest 生成商店专用副本，不覆盖本地开发身份；每次使用独立输出目录避免误取旧包，并核查包内身份、显示名、Desktop 设备家族和必要运行文件。候选 `.msixupload` 只供 Partner Center 审核，不是已签名的站外安装包。
+用户已明确确认验收；四个商店专用字段已写入 `windows/NetMaster/StoreIdentity.json`，并通过 `./tools/Build-StorePackage.ps1 -Architecture x64 -AfterAcceptance` 生成上述候选包。脚本未带确认参数、缺少身份文件或使用占位身份都会在构建前停止。它从源码 manifest 生成商店专用副本，不覆盖本地开发身份；每次使用独立输出目录避免误取旧包，并核查包内身份、显示名、Desktop 设备家族和必要运行文件。候选 `.msixupload` 只供 Partner Center 审核，不是已签名的站外安装包。
 
 安装品牌素材来自仓库定稿 PNG / ICO，可用 `./tools/Generate-BrandAssets.ps1` 重新生成各尺寸磁贴及启动图。
 

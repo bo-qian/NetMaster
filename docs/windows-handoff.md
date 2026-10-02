@@ -1,24 +1,26 @@
-# NetMaster WinUI 开发交接
+# NetMaster Windows 开发交接
 
 最后更新：2026-10-02（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
 
+**当前重命名工作（2026-10-02）：** 用户已要求当前 Windows 应用成为默认版，项目目录 / 程序集从 `NetMaster.WinUI` 改为 `NetMaster`，默认数据目录从 `%LocalAppData%/NetMaster/WinUI` 改为 `%LocalAppData%/NetMaster`，自定义保存位置的子目录从 `NetMaster-WinUI` 改为 `NetMaster`。主窗口或无窗口后台首次启动时只迁移此前这一代 Windows 应用的配置与日志并保留原副本，不碰 Python 旧版的 Roaming 数据；旧登录启动任务迁到新名称。Core 78 项、网页脚本 11 项通过，重命名后 x64 无包构建 0 警告 / 错误；新名称的独立自签名开发测试 MSIX 已生成并核查签名及五个程序文件，尚未安装或实际运行。当前微软送审的 2.0.0.0 包是在重命名前生成的，**与现有源码不一致**；新包完成构建、包内验证及用户验收后才可考虑替换审核包。商店分配的 `BoQian.NetMaster` 身份及发布显示名不变。不能把此前已安装开发版的验收套用到新二进制。
+
 **正式首发版本（2026-10-02）：** 用户确定 WinUI 重构版对外从 **v2.0.0** 开始，以区别 Python 旧版 1.0.0。商店包版本为 **2.0.0.0**，GitHub Release 标签计划为 **v2.0.0**。修正后的 x64 商店上传包已通过 Partner Center 包预检；未在本机安装或运行该版本。源码开发 manifest 和本机 `NetMaster.LocalDevelopment 1.0.0.37` 不改。
 
-**当前发布接续（2026-10-02）：** 用户已在本机查看 `NetMaster.LocalDevelopment 1.0.0.37` 并确认可以进入发布准备；真实断网恢复、登录后自启、升级 / 卸载以及新构建后台组件在本机 Smart App Control 下运行仍无独立现场证据。Partner Center 的 `NetMaster 校园网助手` **Submission 1 已正式提交认证**：用户审阅最终草稿后明确同意，页面显示“正在认证”，提交完成、预处理进行中（第 2/4 步）；尚未得到微软审核结果。送审包是修正过安装显示名并通过包预检的 x64 `2.0.0.0`；商店资料为免费、全球所有市场、审核通过后手动发布，含简中 / 英语列表、真实日志截图、IARC 全球 3+、隐私和受限校园网络认证说明。审核可能要求学校允许的专用测试环境 / 账号，目前未具备。下一步跟进审核反馈；通过后仍需用户决定手动公开发布，再验证商店安装入口并创建 GitHub `v2.0.0` Release。已写 [Release 文案草稿](release-notes-v2.0.0-draft.md)。商店尚未公开，候选包未在本机安装运行。候选包路径、SHA-256 与风险详见 [发布说明](winui-release.md)。
+**当前发布接续（2026-10-02）：** 用户已在本机查看 `NetMaster.LocalDevelopment 1.0.0.37` 并确认可以进入发布准备；真实断网恢复、登录后自启、升级 / 卸载以及新构建后台组件在本机 Smart App Control 下运行仍无独立现场证据。Partner Center 的 `NetMaster 校园网助手` **Submission 1 已正式提交认证**：用户审阅最终草稿后明确同意，页面显示“正在认证”，提交完成、预处理进行中（第 2/4 步）；尚未得到微软审核结果。送审包是修正过安装显示名并通过包预检的 x64 `2.0.0.0`；商店资料为免费、全球所有市场、审核通过后手动发布，含简中 / 英语列表、真实日志截图、IARC 全球 3+、隐私和受限校园网络认证说明。审核可能要求学校允许的专用测试环境 / 账号，目前未具备。下一步跟进审核反馈；通过后仍需用户决定手动公开发布，再验证商店安装入口并创建 GitHub `v2.0.0` Release。已写 [Release 文案草稿](release-notes-v2.0.0-draft.md)。商店尚未公开，候选包未在本机安装运行。候选包路径、SHA-256 与风险详见 [发布说明](windows-release.md)。
 
-**GitHub 同步顺序：** 当前 WinUI 源码、README 与认证记录已推送到 `feature/winui3-windows`，`main` 尚未合并，`v2.0.0` 标签与 GitHub Release 尚未创建。微软认证通过后先由用户确认手动发布；待商店安装入口实际可用，再由用户决定合并开发分支到 `main`，核对版本并从最终发布提交创建 `v2.0.0` Release。不能把未签名的 `.msixupload` 当成 GitHub 可安装附件。
+**GitHub 同步顺序：** 用户于 2026-10-02 明确要求立即合并，`feature/winui3-windows` 已快进合并并推送到 `main`（合并后指向 `a7100c6`）。后续审核要求的修订直接在 `main` 进行；旧 Python Windows 版仍在 `windows/legacy/`，Linux 版保留。`v2.0.0` 标签与 GitHub Release 尚未创建。微软认证通过后仍由用户决定手动发布；待商店安装入口实际可用，再从最终发布提交创建 `v2.0.0` Release。不能把未签名的 `.msixupload` 当成 GitHub 可安装附件。CI 已加入 `main` push 触发，但远端本次运行结果另行核实。
 
 **Visual Studio F5 构建修复（2026-10-02）：** 用户按 F5 后 WinUI 复制阶段找不到 `NetMaster.Worker` 的 runtimeconfig、apphost 和 deps 输出；当时 `Worker/bin/Debug/.../win-x64` 未生成。`NetMaster.WinUI.csproj` 的 `IncludeWorker` 现显式构建 Worker 后再取得路径并复制，覆盖 VS 仅构建启动项目而未先产生 Worker 文件的情况。模拟 `BuildProjectReferences=false` 且先清理 Worker 输出时，目标可重新生成文件；WinUI x64 常规构建 0 错误。**未重新执行 Visual Studio F5 的部署 / 调试全过程**，新构建后台组件仍可能被本机 Smart App Control 拦截。本机已安装的 `NetMaster.LocalDevelopment 1.0.0.37` 保持 Status=Ok，重新启动后 UI 与 Worker 进程均来自该安装目录；继续以此作为用户验收入口。
 
 **商店产品已建立（2026-10-02）：** 用户在 Partner Center 创建 `NetMaster 校园网助手` MSIX/PWA 产品，并于同日提交 Submission 1 认证。此前单独 `NetMaster` 不可预留，用户确认这不是本账号已有预留。商店名称已定，应用内仍沿用 NetMaster 品牌；Product identity 已由用户截图提供并写入商店专用配置，源码 manifest 保留开发占位身份。提交认证不等于审核通过或公开发布。
 
-**注册与签名：** 用户已能在 Partner Center 建立产品并提交认证；个人身份核验的具体状态未独立检查。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。`.p12` / `.pfx` 只是可能含证书和私钥的文件格式，来源不明的转售文件不能当作本人的可信代码签名；不为此购买。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。详见 [发布说明](winui-release.md)。
+**注册与签名：** 用户已能在 Partner Center 建立产品并提交认证；个人身份核验的具体状态未独立检查。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。`.p12` / `.pfx` 只是可能含证书和私钥的文件格式，来源不明的转售文件不能当作本人的可信代码签名；不为此购买。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。详见 [发布说明](windows-release.md)。
 
-**新版使用说明：** 根 `README.md` 是版本入口，`windows/README.md` 是 WinUI 面向用户的使用指南，只说明首次配置、联网与守护、测速、日志、更换账号、设置及数据区别，不放 Visual Studio / `dotnet` 源码构建步骤。历史 Python 版仍由 `windows/legacy/README.md` 单独说明。两份 README 已标注 v2.0.0 认证中，正式安装链接等上架后补入。
+**新版使用说明：** 根 `README.md` 是版本入口，`windows/README.md` 是当前 Windows 应用面向用户的使用指南，只说明首次配置、联网与守护、测速、日志、更换账号、设置及数据区别，不放 Visual Studio / `dotnet` 源码构建步骤。历史 Python 版仍由 `windows/legacy/README.md` 单独说明。两份 README 已标注 v2.0.0 认证中，正式安装链接等上架后补入。
 
 **仓库目录（本轮整理）：** `windows/` 现在是 WinUI 发布主线入口，包含 `NetMaster.WinUI/`、`NetMaster.Worker/`、`NetMaster.Core/` 和测试；原 Python Windows 版的六个文件已整体移到 `windows/legacy/`，其 README 单独保留。根 README 与 `windows/README.md` 已改为主线介绍，历史 Release 的 `NetMaster.exe` 标为 Python 旧版；Linux 目录不变。WinUI 与旧版仍使用独立数据，目录整理没有安装、升级或迁移用户配置。WinUI x64 构建、Core 75 项及网页脚本 11 项通过，旧版 Python 因此机无 Python 解释器未做启动测试。`docs/dev-log.md` 的历史记录保留原路径作为当时事实，不批量改写。
 
-**发布讨论（尚未发布）：** 以 Microsoft Store 的 MSIX 为首发安装与更新渠道；GitHub Release 放版本说明和商店安装入口，免费上架后可核对 Store Web Installer。仓库生成的未签名 MSIX / msixupload 不作为站外安装包；若以后要提供离线直装 MSIX，须另行解决可信签名与更新。Partner Center 已接收通过预检的身份匹配 x64 候选包并开始认证，尚未通过审核或公开发布。详见 [发布说明](winui-release.md)。
+**发布讨论（尚未发布）：** 以 Microsoft Store 的 MSIX 为首发安装与更新渠道；GitHub Release 放版本说明和商店安装入口，免费上架后可核对 Store Web Installer。仓库生成的未签名 MSIX / msixupload 不作为站外安装包；若以后要提供离线直装 MSIX，须另行解决可信签名与更新。Partner Center 已接收通过预检的身份匹配 x64 候选包并开始认证，尚未通过审核或公开发布。详见 [发布说明](windows-release.md)。
 
 **当前本机预览（覆盖后面的历史版本说明）：** `NetMaster.LocalDevelopment 1.0.0.37` 已安装并实际运行。它包含最新 WinUI（设置三个按钮横排、关于 NetMaster 的仓库 / Issues 入口、后台连接失败时的配置保护），与 1.0.0.29 起源码未改变且此前现场运行正常的 Core / Worker 二进制组合。实际概览显示“已连接互联网 / 守护运行中”，配置页在 1.0.0.36 读到原有已保存状态，1.0.0.37 未重复点开配置页。设置对话框现按可用窗口尺寸固定宽高；展开“关于”前后边界不移动，内容可以独立滚动，滚动条一侧预留 20 DIP 空白。桌面“NetMaster 开发测试”入口图标同步到当前包。未现场点击重新配置、下线、清除数据或保存设置。
 
@@ -33,16 +35,16 @@
 ## 仓库与工作分支
 
 - 仓库：<https://github.com/bo-qian/NetMaster>
-- 开发分支：`feature/winui3-windows`，完成调试后再决定合并 `main`。
+- 当前主线：`main`，用户已决定将 `feature/winui3-windows` 快进合并；审核修订继续在 `main`。
 - 当前机器路径：`D:\projects\NetMaster`。其他电脑可以使用自己的目录，不依赖这个绝对路径。
 - 旧版 Windows 程序与说明：`windows/legacy/`（Python + PySide6 + Selenium + requests，Nuitka 打包）。
-- 新版解决方案：`windows/NetMaster.WinUI/NetMaster.WinUI.slnx`。
+- 新版解决方案：`windows/NetMaster/NetMaster.slnx`。
 
 ## 当前实际完成状态
 
 | 项目 | 状态 / 证据 |
 |---|---|
-| Git 开发分支 | 已建立；在该分支继续开发 |
+| Git 主线 | `feature/winui3-windows` 已快进合并到 `main` 并推送；后续在 `main` 开发 |
 | WinUI 空项目 | 用户在 Visual Studio 创建，F5 已打开窗口 |
 | 三页 XAML 布局 | 原登录页已改为配置首页与开始 / 重新配置流程。独立自签名开发 MSIX 本机安装并运行成功，概览 / 配置 / 日志及开始 / 取消已实际查看；真实认证与用户验收待完成 |
 | 深色标题栏 | 已设置 `AppWindow.TitleBar.PreferredTheme = TitleBarTheme.UseDefaultAppMode` |
@@ -214,13 +216,13 @@
 
 最新启动反馈：用户确认 configuration-preview 双击打不开。只读事件核对其 2026-10-01 01:46:08 / 01:46:22 启动同样被 CodeIntegrity 3077 / 3033 拦截 NetMaster.WinUI.dll，.NET Runtime 报 FileLoadException / 0x800711C7。新旧 UI.dll 均为 NotSigned；不能据此确定旧版获准的具体原因，也不能将旧版成功扩大为新版可运行。当前不再让用户重复双击、重编译碰运气或用旧文件覆盖新输出。继续验收需要受信任签名或适合本地编译的独立 Windows 开发环境；已询问用户是否有另一台开发电脑 / 现成虚拟机，尚未收到答复。保留“用户验收后才正式打包”的顺序，不更改本机安全策略。
 
-用户已确认有另一台 Windows 电脑，并明确要求提交 / push 后在另一台 pull。当前将业务初版、配置流程、UI 修复、测试和交接一起保存到 feature/winui3-windows；不合并 main。bin 预览输出不进入 Git，另一台拉取后需本地构建：安装 Visual Studio WinUI 工作负载与 WebView2 Runtime，打开 windows/NetMaster.WinUI/NetMaster.WinUI.slnx，将 UI 项目作为启动项目，选择 x64 / Debug，通过正常 F5 开发调试检查。如需未打包文件夹预览，在仓库根目录运行：
+用户已确认有另一台 Windows 电脑，并明确要求提交 / push 后在另一台 pull。当前将业务初版、配置流程、UI 修复、测试和交接一起保存到 feature/winui3-windows；不合并 main。bin 预览输出不进入 Git，另一台拉取后需本地构建：安装 Visual Studio WinUI 工作负载与 WebView2 Runtime，打开 windows/NetMaster/NetMaster.slnx，将 UI 项目作为启动项目，选择 x64 / Debug，通过正常 F5 开发调试检查。如需未打包文件夹预览，在仓库根目录运行：
 
 阶段提交 adc56bd 已成功推送 origin/feature/winui3-windows；本轮再次通过 39 项 Core 测试与未打包 x64 Debug 构建（0 警告 / 错误）。以下命令用于新电脑从源码生成预览，不依赖原机器的 bin 文件。
 
 ```powershell
 $previewOut = Join-Path (Get-Location) 'windows/NetMaster.WinUI/bin/configuration-preview/'
-dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -p:WindowsPackageType=None -p:GenerateAppxPackageOnBuild=false "-p:OutDir=$previewOut" -v:minimal
+dotnet build windows/NetMaster/NetMaster.csproj -p:Platform=x64 -p:WindowsPackageType=None -p:GenerateAppxPackageOnBuild=false "-p:OutDir=$previewOut" -v:minimal
 ```
 
 构建成功后从完整输出目录启动 NetMaster.WinUI.exe。新电脑是否有运行库 / 安全策略阻碍尚未验证，出现错误应根据该电脑实际日志诊断。仍按“配置首页 → 开始 / 取消保留配置 → 用户确认后实际重新认证 / 保存”的顺序验收。
@@ -260,7 +262,7 @@ git pull --ff-only
 正常构建：
 
 ```powershell
-dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -v:minimal
+dotnet build windows/NetMaster/NetMaster.csproj -p:Platform=x64 -v:minimal
 ```
 
 完成工作或准备换电脑时，更新交接和开发日志，将相关修改提交并推送到本分支。另一台电脑再拉取，才能看到这些记录。**日志文件本身不会跨机器自动同步；同步通过 Git 完成。**
@@ -307,7 +309,7 @@ dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -v:m
 
 ## 2026-10-01 · 业务逻辑与接入方案
 
-用户确认当前 UI 已打磨完成，并授权继续完成实际功能。下方为实施方案与分轮记录；学校协议、独立重连与打包后台启动仍需实测，不能视为已验证能力。最新验证与发布细节见 [winui-release.md](winui-release.md)。
+用户确认当前 UI 已打磨完成，并授权继续完成实际功能。下方为实施方案与分轮记录；学校协议、独立重连与打包后台启动仍需实测，不能视为已验证能力。最新验证与发布细节见 [windows-release.md](windows-release.md)。
 
 ### 本轮实际接入状态与优先接续
 

@@ -4,7 +4,8 @@ namespace NetMaster.Core;
 
 public static class StartupRegistration
 {
-    public static string Name => "NetMaster_WinUI_" + Protocol.UserKey;
+    public static string Name => "NetMaster_" + Protocol.UserKey;
+    private static string PreviousName => "NetMaster_WinUI_" + Protocol.UserKey;
     private static dynamic Service()
     {
         var service = Activator.CreateInstance(Type.GetTypeFromProgID("Schedule.Service")!)!;
@@ -20,6 +21,15 @@ public static class StartupRegistration
         dynamic? task = FindTask(Name);
         return task is not null && (bool)task.Enabled;
     }
+    public static bool MigratePreviousRegistration(string executable, string home)
+    {
+        dynamic? previous = FindTask(PreviousName);
+        if (previous is null) return false;
+        if ((bool)previous.Enabled && !Enabled()) SetEnabled(true, executable, home);
+        dynamic folder = Service().GetFolder("\\");
+        folder.DeleteTask(PreviousName, 0);
+        return true;
+    }
     internal static object? FindTask(string name)
     {
         dynamic folder = Service().GetFolder("\\");
@@ -33,7 +43,12 @@ public static class StartupRegistration
     public static void SetEnabled(bool enabled, string executable, string home)
     {
         dynamic service = Service(); dynamic folder = service.GetFolder("\\");
-        if (!enabled) { try { folder.DeleteTask(Name, 0); } catch (Exception ex) when (MissingTask(ex)) { } return; }
+        if (!enabled)
+        {
+            foreach (var taskName in new[] { Name, PreviousName })
+                try { folder.DeleteTask(taskName, 0); } catch (Exception ex) when (MissingTask(ex)) { }
+            return;
+        }
         if (!File.Exists(executable)) throw new FileNotFoundException();
         dynamic definition = service.NewTask(0);
         definition.RegistrationInfo.Description = "NetMaster 校园网后台守护（当前用户登录后启动）";

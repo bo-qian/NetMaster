@@ -2,7 +2,7 @@ using System;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Text;
 
-namespace NetMaster.WinUI;
+namespace NetMaster;
 
 public sealed class LogToneConverter : IValueConverter
 {

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const script = fs.readFileSync(path.join(__dirname, '../../windows/NetMaster.WinUI/PortalLayout.js'), 'utf8');
+const script = fs.readFileSync(path.join(__dirname, '../../windows/NetMaster/PortalLayout.js'), 'utf8');
 
 function setup(origin = 'http://10.10.9.9') {
     let viewport = 800, content = 1200;

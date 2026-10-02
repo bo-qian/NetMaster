@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <RootNamespace>NetMaster.WinUI</RootNamespace>
+    <RootNamespace>NetMaster</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>..\..\assets\branding\netmaster-icon.ico</ApplicationIcon>
     <Platforms>x86;x64;ARM64</Platforms>
@@ -64,7 +64,7 @@
       <!-- Sign the canonical files chosen by MSIX after it deduplicates obj/bin
            inputs. Signing only bin earlier makes identical inputs diverge. -->
       <NetMasterDevelopmentBinary Include="@(AppxPackagePayload)"
-          Condition="'%(TargetPath)' == 'NetMaster.WinUI.exe' Or '%(TargetPath)' == 'NetMaster.WinUI.dll' Or '%(TargetPath)' == 'NetMaster.Worker.exe' Or '%(TargetPath)' == 'NetMaster.Worker.dll' Or '%(TargetPath)' == 'NetMaster.Core.dll'" />
+          Condition="'%(TargetPath)' == 'NetMaster.exe' Or '%(TargetPath)' == 'NetMaster.dll' Or '%(TargetPath)' == 'NetMaster.Worker.exe' Or '%(TargetPath)' == 'NetMaster.Worker.dll' Or '%(TargetPath)' == 'NetMaster.Core.dll'" />
     </ItemGroup>
     <Error Condition="'@(NetMasterDevelopmentBinary->Count())' != '5'" Text="Expected all five NetMaster executable binaries in the development payload; found @(NetMasterDevelopmentBinary->'%(TargetPath)')." />
     <Error Condition="!Exists('%(NetMasterDevelopmentBinary.Identity)')" Text="Missing development binary: %(NetMasterDevelopmentBinary.Identity)" />

@@ -1,4 +1,4 @@
-namespace NetMaster.WinUI;
+namespace NetMaster;
 
 public sealed partial class MainWindow
 {

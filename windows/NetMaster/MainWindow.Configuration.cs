@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using NetMaster.Core;
 
-namespace NetMaster.WinUI;
+namespace NetMaster;
 
 public sealed partial class MainWindow
 {
