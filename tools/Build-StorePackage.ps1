@@ -46,8 +46,10 @@ $uploads = @(Get-ChildItem -LiteralPath $packages -Filter '*.msixupload' -Recurs
 if ($uploads.Count -ne 1) { throw "本次构建应生成一个商店上传文件，实际为 $($uploads.Count) 个。" }
 $upload = $uploads[0]
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$msixes = @(Get-ChildItem -LiteralPath $packages -Filter '*.msix' -Recurse -File)
-if ($msixes.Count -ne 1) { throw "本次构建应生成一个 MSIX 文件，实际为 $($msixes.Count) 个。" }
+$primaryPackageName = "NetMaster.WinUI_${storeVersion}_${Architecture}.msix"
+$msixes = @(Get-ChildItem -LiteralPath $packages -Filter $primaryPackageName -Recurse -File |
+    Where-Object { $_.DirectoryName -notmatch '[\\/]Dependencies([\\/]|$)' })
+if ($msixes.Count -ne 1) { throw "本次构建应生成一个主应用 MSIX 文件，实际为 $($msixes.Count) 个。" }
 $msix = $msixes[0]
 function Test-Payload([IO.Compression.ZipArchive]$archive) {
     foreach ($name in @('NetMaster.WinUI.exe', 'NetMaster.Worker.exe', 'NetMaster.Worker.dll', 'NetMaster.Worker.deps.json', 'NetMaster.Worker.runtimeconfig.json', 'NetMaster.Core.dll', 'System.Security.Cryptography.ProtectedData.dll', 'coreclr.dll', 'hostfxr.dll', 'hostpolicy.dll')) {

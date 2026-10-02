@@ -544,3 +544,10 @@
 - 决定 / 改动：对外版本与计划中的 GitHub Release 标签采用 `v2.0.0`；`Build-StorePackage.ps1` 生成商店专用 manifest 时设置并核查 MSIX 四段包版本 `2.0.0.0`。本地开发包仍维持独立身份和递增序号，不修改已安装 `NetMaster.LocalDevelopment 1.0.0.37`。更新 `docs/winui-release.md` 与 `docs/winui-handoff.md`。
 - 验证：核对微软当前 MSIX 包版本规则及应用关于页从已安装包身份读取版本的代码；PowerShell 脚本语法与 `git diff --check` 通过。尚无商店身份字段，因此未生成、安装或运行 2.0.0.0 包。
 - 接续：取得 Partner Center 三个身份字段后构建正式候选包，检查产物身份、版本和运行文件，再准备商店提交；未发布 GitHub Release。
+
+### 2026-10-02 · 关联商店产品标识并生成 2.0.0 候选包
+
+- 需求 / 问题：用户提供 Partner Center `NetMaster 校园网助手` 的产品标识截图，要求接续正式发布准备。
+- 决定 / 改动：将截图中的 Name `BoQian.NetMaster`、Publisher `CN=3A8E9608-D9F3-48BD-BC94-F877AEC6081D`、PublisherDisplayName `Bo Qian` 写入 `windows/NetMaster.WinUI/StoreIdentity.json`。首次构建生成上传文件后，脚本错误地把 4 个 Windows App Runtime 依赖包也算作主包；`tools/Build-StorePackage.ps1` 改为按 `NetMaster.WinUI_2.0.0.0_x64.msix` 精确匹配主包。更新发布与交接文档。
+- 验证：第二次运行商店打包脚本成功，完成主 MSIX 与上传包内主 MSIX 的身份、版本、Desktop 家族、运行文件和 StartupTask 核查。本机候选 `.msixupload` 大小 75,749,505 字节，SHA-256 `A068910105D98164C77A348D53659D0508A2294A39CA995624E8B8F37DA8DA48`。未安装或运行未签名正式包；未找到可直接运行的本机 `appcert.exe`，尚未完成 Windows App Certification Kit 检查，也未上传 Partner Center。
+- 接续：准备商店页面截图、隐私说明公开 URL 与提交资料，核对仍缺的边界测试；候选包只能上传商店审核，不能作为 GitHub 站外直装包。用户检查最终提交页面前不提交审核或创建公开 Release。
