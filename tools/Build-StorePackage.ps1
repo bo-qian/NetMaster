@@ -15,9 +15,10 @@ $storeIdentity = Get-Content -LiteralPath $identityPath -Raw | ConvertFrom-Json
 if ([string]::IsNullOrWhiteSpace($storeIdentity.Name) -or
     [string]::IsNullOrWhiteSpace($storeIdentity.Publisher) -or
     [string]::IsNullOrWhiteSpace($storeIdentity.PublisherDisplayName) -or
+    [string]::IsNullOrWhiteSpace($storeIdentity.DisplayName) -or
     $storeIdentity.Name -eq '4e6619dc-7548-4e3f-8cb2-537e2dba258c' -or
     $storeIdentity.Publisher -eq 'CN=qianbo') {
-    throw 'StoreIdentity.json 必须填写 Partner Center 的 Name、Publisher 和 PublisherDisplayName，不能使用开发占位值。'
+    throw 'StoreIdentity.json 必须填写 Partner Center 的 Name、Publisher、PublisherDisplayName 和已预留的 DisplayName，不能使用开发占位值。'
 }
 [xml]$sourceManifest = Get-Content -LiteralPath $manifestPath -Raw
 $families = @($sourceManifest.Package.Dependencies.TargetDeviceFamily | ForEach-Object { $_.Name })
@@ -29,6 +30,10 @@ $sourceManifest.Package.Identity.Publisher = [string]$storeIdentity.Publisher
 $storeVersion = '2.0.0.0'
 $sourceManifest.Package.Identity.Version = $storeVersion
 $sourceManifest.Package.Properties.PublisherDisplayName = [string]$storeIdentity.PublisherDisplayName
+$sourceManifest.Package.Properties.DisplayName = [string]$storeIdentity.DisplayName
+$visualElements = $sourceManifest.SelectSingleNode("//*[local-name()='VisualElements']")
+if (!$visualElements) { throw '源清单缺少 VisualElements。' }
+$visualElements.SetAttribute('DisplayName', [string]$storeIdentity.DisplayName)
 $identity = $sourceManifest.Package.Identity
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
 if (!(Test-Path -LiteralPath $vswhere)) { throw '请安装 Visual Studio 的 WinUI 应用程序开发工作负载。' }
@@ -60,7 +65,9 @@ function Test-Payload([IO.Compression.ZipArchive]$archive) {
     if ($manifest.Package.Identity.Name -ne $identity.Name -or
         $manifest.Package.Identity.Publisher -ne $identity.Publisher -or
         $manifest.Package.Identity.Version -ne $storeVersion -or
-        $manifest.Package.Properties.PublisherDisplayName -ne $sourceManifest.Package.Properties.PublisherDisplayName) {
+        $manifest.Package.Properties.PublisherDisplayName -ne $sourceManifest.Package.Properties.PublisherDisplayName -or
+        $manifest.Package.Properties.DisplayName -ne $storeIdentity.DisplayName -or
+        $manifest.SelectSingleNode("//*[local-name()='VisualElements']").GetAttribute('DisplayName') -ne $storeIdentity.DisplayName) {
         throw '生成的 MSIX 身份或版本与本次商店配置不一致。'
     }
     $packagedFamilies = @($manifest.Package.Dependencies.TargetDeviceFamily | ForEach-Object { $_.Name })

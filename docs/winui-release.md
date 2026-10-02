@@ -1,12 +1,14 @@
 # WinUI 验证与发布
 
-发布路线：Microsoft Store 的 MSIX。用户已在 Partner Center 建立 `NetMaster 校园网助手` 草稿产品，并于 2026-10-02 确认当前开发版的本地验收没有问题，同意进入下一步。产品标识截图已提供，商店分配的三个字段已写入 `windows/NetMaster.WinUI/StoreIdentity.json`；源码 `Package.appxmanifest` 继续保留本机开发身份，商店打包时生成独立 manifest。个人身份核验具体状态未独立检查。正式商店提交与公开 GitHub Release 均尚未进行。
+发布路线：Microsoft Store 的 MSIX。用户已在 Partner Center 建立 `NetMaster 校园网助手` 产品，并于 2026-10-02 确认当前开发版的本地验收没有问题，同意进入下一步。Submission 1 仍为草稿：修正后的 x64 `2.0.0.0` 包已上传并通过 Partner Center 包预检；商店资料已填写，**尚未点击“提交进行认证”**，也没有公开 GitHub Release。个人身份核验具体状态未独立检查。
 
 **首发版本：** 用户指定 WinUI 新版对外以 **v2.0.0** 上线，与 Python 旧版 1.0.0 区分。Microsoft Store 候选 MSIX 的四段包版本固定为 **2.0.0.0**，第四段为 0；GitHub Release 标记和版本说明使用 **v2.0.0**。源码 manifest 与已安装的 `NetMaster.LocalDevelopment 1.0.0.37` 属于独立开发身份，不据此判断正式包的版本。后续更新必须递增商店包版本，不能重复提交相同版本。
 
-当前顺序：产品标识已取得、包身份已关联、`Build-StorePackage.ps1 -AfterAcceptance` 候选包已核查 → 复核 [商店列表草稿](store-listing-draft.md)、[隐私说明](privacy-policy.md) 与真实截图 → 在 Partner Center 上传并检查预检结果 → 核对仍待独立验证的运行边界 → 用户检查最终页面后提交审核。用户验收的是当前运行版；真实断网恢复、Windows 登录后自启、升级 / 卸载及新构建后台组件的运行策略仍未在本轮独立验证，不将构建通过等同于这些检查通过。
+当前顺序：先解决总览中定价 / 年龄分级未标完成、送审按钮禁用的问题 → 用户审阅 Submission 1 总览及商店列表 → 用户明确同意后才提交认证 → 等待微软审核；通过后仍由用户手动发布。用户验收的是当前运行版；真实断网恢复、Windows 登录后自启、升级 / 卸载及新构建后台组件的运行策略仍未独立验证，不将构建或商店包预检等同于这些检查通过。
 
-**当前候选包（2026-10-02）：** 产物位于本机忽略目录 `windows/NetMaster.WinUI/bin/store-packages-x64/20261002-105154-9d1e136b/NetMaster.WinUI_2.0.0.0_x64.msixupload`，大小 75,749,505 字节，SHA-256 `A068910105D98164C77A348D53659D0508A2294A39CA995624E8B8F37DA8DA48`。构建脚本核查了主 MSIX 和上传包内主 MSIX：Name `BoQian.NetMaster`、Publisher `CN=3A8E9608-D9F3-48BD-BC94-F877AEC6081D`、PublisherDisplayName `Bo Qian`、Version `2.0.0.0`、唯一目标家族 `Windows.Desktop`，以及 UI、Worker、Core、.NET 文件与 StartupTask。首次核查误把 4 个 Windows App Runtime 依赖 MSIX 算作主包；选择规则已改为精确匹配 `NetMaster.WinUI_2.0.0.0_x64.msix` 后整段脚本通过。此包未签名，只能作为 Partner Center 审核素材；未安装、未上传，不能据此声称新构建后台通过本机 Smart App Control。
+**已上传的候选包（2026-10-02）：** 产物位于本机忽略目录 `windows/NetMaster.WinUI/bin/store-packages-x64/20261002-140252-691be6ba/NetMaster.WinUI_2.0.0.0_x64.msixupload`，大小 75,749,548 字节，SHA-256 `CFBAC9323D3525C3631682CF640209CCE085BEE94EF4F6929D45539B8D118D1C`。首包因安装显示名 `NetMaster` 未预留被预检拒绝；商店专用清单现将 Properties 和 VisualElements 的 DisplayName 均设为已预留的 `NetMaster 校园网助手`，重建后在 Partner Center 显示包验证完成。构建脚本仍核查 Name `BoQian.NetMaster`、Publisher `CN=3A8E9608-D9F3-48BD-BC94-F877AEC6081D`、PublisherDisplayName `Bo Qian`、Version `2.0.0.0`、Desktop 家族、运行文件与 StartupTask。源码开发身份未改。此上传包未在本机安装或运行，不能据此声称新构建后台通过 Smart App Control。
+
+**Submission 1 草稿：** 用户确定免费、全球所有市场、审核通过后手动发布。属性填为实用工具 / 工具，隐私说明采用 [本仓库说明](privacy-policy.md) 的正文，网站与支持入口指向本项目仓库和 Issues。IARC 问卷按工具实际功能填写，用户阅读并同意条款后已保存；重新进入分级详情页确认 IARC 分级 ID 已生成，全球 3+。简体中文和英语（美国）列表均已填写介绍、说明和 6 条功能要点，且各上传一张获用户同意的真实日志页截图。认证说明如实指出学校门户只在对应校园网络可用，未提供私人测试账号。`runFullTrust` 用途说明已填写。**仍有待核实的 Partner Center 状态：** 重新进入总览后，属性、包、列表、提交选项显示完成，但“定价和可用性”“年龄分级”行未标“完成”，送审按钮显示禁用；定价详情仍保存全球所有市场 / 免费设置，年龄详情已有 3+ ID。此前按钮曾短暂可用，不能据此认定现在已满足送审条件。须查清这两项状态后，再交用户审阅和决定是否送审。
 
 **验收关口：** 用户此前要求先看实际运行效果，确认后再打包；2026-10-02 已明确确认当前开发版验收没有问题。`-AfterAcceptance` 现可用于候选包，但脚本会在缺少商店身份文件或其内容仍为占位时拒绝打包。此前生成的未签名测试素材不发布、不安装。CI 仍只测试和构建开发版。
 
@@ -30,7 +32,7 @@ dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -p:W
 
 GitHub Actions 配置仅测试和构建开发版，不打包、不创建 Release、不发布商店；远端 CI 尚未执行。
 
-用户已明确确认验收；三个字段已写入 `windows/NetMaster.WinUI/StoreIdentity.json`，并通过 `./tools/Build-StorePackage.ps1 -Architecture x64 -AfterAcceptance` 生成上述候选包。脚本未带确认参数、缺少身份文件或使用占位身份都会在构建前停止。它从源码 manifest 生成商店专用副本，不覆盖本地开发身份；每次使用独立输出目录避免误取旧包，并核查包内身份、Desktop 设备家族和必要运行文件。候选 `.msixupload` 只供 Partner Center 上传审核，不是已签名的站外安装包。
+用户已明确确认验收；四个商店专用字段已写入 `windows/NetMaster.WinUI/StoreIdentity.json`，并通过 `./tools/Build-StorePackage.ps1 -Architecture x64 -AfterAcceptance` 生成上述候选包。脚本未带确认参数、缺少身份文件或使用占位身份都会在构建前停止。它从源码 manifest 生成商店专用副本，不覆盖本地开发身份；每次使用独立输出目录避免误取旧包，并核查包内身份、显示名、Desktop 设备家族和必要运行文件。候选 `.msixupload` 只供 Partner Center 审核，不是已签名的站外安装包。
 
 安装品牌素材来自仓库定稿 PNG / ICO，可用 `./tools/Generate-BrandAssets.ps1` 重新生成各尺寸磁贴及启动图。
 
@@ -53,7 +55,7 @@ Microsoft Store 会在审核后为商店分发包重新签名。源码仓库生�
 
 上架后，符合条件的免费 MSIX 应用可以使用 Microsoft Store Web Installer：从产品网页或 Direct Store badge 下载轻量安装器，由 Store 下载并安装正式包。GitHub Release 可提供正式商店 / 官方安装入口；是否适合把安装器文件作为附件，需在产品上架后核对分发方式。独立离线 MSIX 附件的有效签名仍是单独的发布条件，不承诺商店自动给任意站外包签名。[官方安装器说明](https://learn.microsoft.com/en-us/windows/apps/distribute-through-store/how-to-use-store-web-installer-for-distribution)
 
-用户已建立草稿产品，产品标识三字段已写入 `StoreIdentity.json`，并生成 2.0.0.0 候选上传包。仓库已准备 [WinUI 隐私说明草稿](privacy-policy.md)；提交前需核对内容，并在 Partner Center 填入隐私说明文字或可公开访问的稳定页面地址，同时补齐截图和最终商店资料。个人资料只在微软官方页面提交，不发送给项目仓库或助手。
+Submission 1 已收到通过预检的 2.0.0.0 候选上传包、隐私说明、双语列表和一张各语言共用的真实日志页截图；用户审阅最终草稿后才提交认证。个人资料只在微软官方页面提交，不发送给项目仓库或助手。学校允许的专用审核环境 / 账号尚未具备，认证可能要求补充；不使用个人真实校园网凭证。
 
 ## 个人账号注册与签名说明（2026-10-01 核对）
 
@@ -61,4 +63,4 @@ Microsoft Store 会在审核后为商店分发包重新签名。源码仓库生�
 - 用户已在 Partner Center 的 Apps & Games 中建成 MSIX/PWA 草稿产品 `NetMaster 校园网助手`（截图日期 2026-10-02）；单独 `NetMaster` 此前不可预留。商店产品名与安装后的包显示名分属不同字段；微软建议两者一致以免困惑，应用内仍可使用 NetMaster 品牌。Product identity 三字段已写入独立 StoreIdentity.json；源码 manifest 的本地开发身份不当作商店身份。[名称预留规则](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/reserve-your-apps-name) · [列表与安装名](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/add-and-edit-store-listing-info) · [商店身份字段](https://learn.microsoft.com/en-us/windows/apps/publish/view-app-identity-details)
 - Store MSIX 通过审核后由微软重新签名；注册不会给开发者一张可导出、可用于任意站外包的签名证书。现有本机自签名开发测试证书也不是正式公开分发证书。若以后要在 GitHub Release 提供独立直装 MSIX，另需站外可信签名方案。[微软签名说明](https://learn.microsoft.com/en-us/windows/apps/publish/get-started)
 - `.p12` / `.pfx` 是 PKCS#12 文件格式，可能包含证书和私钥，并不表示证书具有受信任的代码签名用途或属于本开发者。不购买来源不明的转售文件作为正式签名；公开代码签名应在需要站外直装时，按届时适用条件直接向可信 CA 或合规签名服务申请。当前 Store MSIX 路线无需购买证书。[PKCS#12 规范](https://www.rfc-editor.org/info/rfc7292/) · [微软签名选项](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options)
-- 草稿产品已经建立，用户已确认本地验收；身份关联和 x64 候选包构建完成，上传与提交仍待执行。个人证件、自拍和 Microsoft 账号凭据只在微软官方页面操作，不写入仓库。
+- 草稿产品已经建立，用户已确认本地验收；x64 候选包已上传并通过包预检，正式认证提交仍待用户审阅。个人证件、自拍和 Microsoft 账号凭据只在微软官方页面操作，不写入仓库。
