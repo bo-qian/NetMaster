@@ -586,3 +586,10 @@
 - 决定 / 改动：在 Partner Center 提交 NetMaster 校园网助手 Submission 1；保留审核通过后手动发布设置，未点击“立即发布”。关闭提交后的可选反馈邀请，没有发送反馈。更新根与 Windows 使用说明中的发布状态、`docs/winui-release.md`、`docs/winui-handoff.md`；新增 `docs/release-notes-v2.0.0-draft.md`，仅作为未来 GitHub Release 文案草稿，不创建公开 Release，也不附未签名包。
 - 验证：Partner Center 显示产品“正在认证”，提交步骤完成、预处理正在进行（第 2/4 步），认证与发布尚未开始；页面说明需“立即发布”才开始发布。未收到认证结果，未安装或运行正式商店包。本轮只检查提交状态和编辑文档，无新代码构建或现场网络测试。
 - 接续：关注微软认证结果和可能的受限校园网测试反馈；通过后由用户决定手动发布，确认商店安装链接及实际安装运行，再创建 `v2.0.0` GitHub Release。
+
+### 2026-10-02 · 确认商店与 GitHub 发布顺序
+
+- 需求 / 问题：用户确认是否等待微软认证，再手动发布，之后更新 GitHub 仓库和 Release。
+- 决定 / 改动：明确 `feature/winui3-windows` 的代码与说明已推送，`main` 尚未合并，公开 GitHub `v2.0.0` Release 也未创建；补充 `docs/winui-handoff.md` 的顺序说明。认证通过后仍需用户手动发布；确认商店安装入口可用后，再由用户决定合并 `main`，从最终提交创建标签与 Release。
+- 验证：本轮核对 Git 分支为 `feature/winui3-windows` 且工作区干净，最新提交 `c3bd3a9`；沿用上一轮 Partner Center “正在认证 / 预处理中”证据，未重新读取实时审核状态。无应用代码改动或构建。
+- 接续：等待审核结果；若审核要求补充测试信息则先处理。未收到通过与手动发布决定前，不创建公开 GitHub Release。

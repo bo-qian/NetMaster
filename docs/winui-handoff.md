@@ -6,6 +6,8 @@
 
 **当前发布接续（2026-10-02）：** 用户已在本机查看 `NetMaster.LocalDevelopment 1.0.0.37` 并确认可以进入发布准备；真实断网恢复、登录后自启、升级 / 卸载以及新构建后台组件在本机 Smart App Control 下运行仍无独立现场证据。Partner Center 的 `NetMaster 校园网助手` **Submission 1 已正式提交认证**：用户审阅最终草稿后明确同意，页面显示“正在认证”，提交完成、预处理进行中（第 2/4 步）；尚未得到微软审核结果。送审包是修正过安装显示名并通过包预检的 x64 `2.0.0.0`；商店资料为免费、全球所有市场、审核通过后手动发布，含简中 / 英语列表、真实日志截图、IARC 全球 3+、隐私和受限校园网络认证说明。审核可能要求学校允许的专用测试环境 / 账号，目前未具备。下一步跟进审核反馈；通过后仍需用户决定手动公开发布，再验证商店安装入口并创建 GitHub `v2.0.0` Release。已写 [Release 文案草稿](release-notes-v2.0.0-draft.md)。商店尚未公开，候选包未在本机安装运行。候选包路径、SHA-256 与风险详见 [发布说明](winui-release.md)。
 
+**GitHub 同步顺序：** 当前 WinUI 源码、README 与认证记录已推送到 `feature/winui3-windows`，`main` 尚未合并，`v2.0.0` 标签与 GitHub Release 尚未创建。微软认证通过后先由用户确认手动发布；待商店安装入口实际可用，再由用户决定合并开发分支到 `main`，核对版本并从最终发布提交创建 `v2.0.0` Release。不能把未签名的 `.msixupload` 当成 GitHub 可安装附件。
+
 **Visual Studio F5 构建修复（2026-10-02）：** 用户按 F5 后 WinUI 复制阶段找不到 `NetMaster.Worker` 的 runtimeconfig、apphost 和 deps 输出；当时 `Worker/bin/Debug/.../win-x64` 未生成。`NetMaster.WinUI.csproj` 的 `IncludeWorker` 现显式构建 Worker 后再取得路径并复制，覆盖 VS 仅构建启动项目而未先产生 Worker 文件的情况。模拟 `BuildProjectReferences=false` 且先清理 Worker 输出时，目标可重新生成文件；WinUI x64 常规构建 0 错误。**未重新执行 Visual Studio F5 的部署 / 调试全过程**，新构建后台组件仍可能被本机 Smart App Control 拦截。本机已安装的 `NetMaster.LocalDevelopment 1.0.0.37` 保持 Status=Ok，重新启动后 UI 与 Worker 进程均来自该安装目录；继续以此作为用户验收入口。
 
 **商店产品已建立（2026-10-02）：** 用户在 Partner Center 创建 `NetMaster 校园网助手` MSIX/PWA 产品，并于同日提交 Submission 1 认证。此前单独 `NetMaster` 不可预留，用户确认这不是本账号已有预留。商店名称已定，应用内仍沿用 NetMaster 品牌；Product identity 已由用户截图提供并写入商店专用配置，源码 manifest 保留开发占位身份。提交认证不等于审核通过或公开发布。
