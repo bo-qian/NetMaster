@@ -53,7 +53,7 @@ Microsoft Store 会在审核后为商店分发包重新签名。源码仓库生�
 
 上架后，符合条件的免费 MSIX 应用可以使用 Microsoft Store Web Installer：从产品网页或 Direct Store badge 下载轻量安装器，由 Store 下载并安装正式包。GitHub Release 可提供正式商店 / 官方安装入口；是否适合把安装器文件作为附件，需在产品上架后核对分发方式。独立离线 MSIX 附件的有效签名仍是单独的发布条件，不承诺商店自动给任意站外包签名。[官方安装器说明](https://learn.microsoft.com/en-us/windows/apps/distribute-through-store/how-to-use-store-web-installer-for-distribution)
 
-用户已建立草稿产品；目前等待用户从“产品标识”复制三个非秘密包身份字段。仓库已准备 [WinUI 隐私说明草稿](privacy-policy.md)，提交前须将其发布为可公开访问的 HTTPS 页面并核对页面内容、截图及最终商店资料。个人资料只在微软官方页面提交，不发送给项目仓库或助手。
+用户已建立草稿产品，产品标识三字段已写入 `StoreIdentity.json`，并生成 2.0.0.0 候选上传包。仓库已准备 [WinUI 隐私说明草稿](privacy-policy.md)；提交前需核对内容，并在 Partner Center 填入隐私说明文字或可公开访问的稳定页面地址，同时补齐截图和最终商店资料。个人资料只在微软官方页面提交，不发送给项目仓库或助手。
 
 ## 个人账号注册与签名说明（2026-10-01 核对）
 

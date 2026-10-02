@@ -551,3 +551,10 @@
 - 决定 / 改动：将截图中的 Name `BoQian.NetMaster`、Publisher `CN=3A8E9608-D9F3-48BD-BC94-F877AEC6081D`、PublisherDisplayName `Bo Qian` 写入 `windows/NetMaster.WinUI/StoreIdentity.json`。首次构建生成上传文件后，脚本错误地把 4 个 Windows App Runtime 依赖包也算作主包；`tools/Build-StorePackage.ps1` 改为按 `NetMaster.WinUI_2.0.0.0_x64.msix` 精确匹配主包。更新发布与交接文档。
 - 验证：第二次运行商店打包脚本成功，完成主 MSIX 与上传包内主 MSIX 的身份、版本、Desktop 家族、运行文件和 StartupTask 核查。本机候选 `.msixupload` 大小 75,749,505 字节，SHA-256 `A068910105D98164C77A348D53659D0508A2294A39CA995624E8B8F37DA8DA48`。未安装或运行未签名正式包；未找到可直接运行的本机 `appcert.exe`，尚未完成 Windows App Certification Kit 检查，也未上传 Partner Center。
 - 接续：准备商店页面截图、隐私说明公开 URL 与提交资料，核对仍缺的边界测试；候选包只能上传商店审核，不能作为 GitHub 站外直装包。用户检查最终提交页面前不提交审核或创建公开 Release。
+
+### 2026-10-02 · 明确商店提交的下一步
+
+- 需求 / 问题：用户询问取得产品标识并构建候选包后应做什么。
+- 决定 / 改动：核对微软当前 MSIX 提交流程：先备好商店文案、真实且去个人信息的截图、隐私说明与上架范围；在 Partner Center 草稿中上传现有 `2.0.0.0` `.msixupload` 并处理预检，再核对未独立验证的后台运行边界，最后由用户审阅提交页面后送审。修正 `docs/winui-release.md` 中已过时的“等待产品标识”表述；微软目前允许在隐私项直接填说明文字或提供页面链接。
+- 验证：只查阅微软官方提交流程与本地仓库状态；工作分支为 `feature/winui3-windows`，此前候选包未上传、未安装、未提交审核。本轮未构建或运行软件。
+- 接续：完成商店素材和 Partner Center 草稿预检；正式送审及 GitHub Release 仍未进行。
