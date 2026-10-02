@@ -1,7 +1,7 @@
 name: Windows validation
 on:
   push:
-    branches: [main, feature/winui3-windows]
+    branches: [main]
   pull_request:
     paths: ['windows/**', 'tools/**', 'assets/branding/**', '.github/workflows/windows.yml']
   workflow_dispatch:

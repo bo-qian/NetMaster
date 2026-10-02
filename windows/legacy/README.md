@@ -11,13 +11,13 @@
 ### 方式二：从源码运行
 
 ```bash
-git clone -b feature/winui3-windows git@github.com:bo-qian/NetMaster.git
+git clone git@github.com:bo-qian/NetMaster.git
 cd NetMaster/windows/legacy
 pip install -r requirements.txt
 python main.py
 ```
 
-如果此前从源码运行，并已让旧版任务计划指向原来的 `windows/main.py`，移动目录后需要在 `windows/legacy/` 重新运行旧版并更新任务计划。已打包的历史 `NetMaster.exe` 不依赖仓库中的源码位置。旧版数据不会自动迁入 WinUI。
+如果此前从源码运行，并已让旧版任务计划指向原来的 `windows/main.py`，移动目录后需要在 `windows/legacy/` 重新运行旧版并更新任务计划。已打包的历史 `NetMaster.exe` 不依赖仓库中的源码位置。旧版数据不会自动迁入当前 Windows 应用。
 
 ## 使用流程
 
