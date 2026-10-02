@@ -7,15 +7,27 @@ if (!$AfterAcceptance) { throw '先运行开发版并取得用户的界面与功
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $project = Join-Path $repoRoot 'windows/NetMaster.WinUI/NetMaster.WinUI.csproj'
 $manifestPath = Join-Path $repoRoot 'windows/NetMaster.WinUI/Package.appxmanifest'
-[xml]$sourceManifest = Get-Content -LiteralPath $manifestPath -Raw
-$identity = $sourceManifest.Package.Identity
-if ($identity.Name -eq '4e6619dc-7548-4e3f-8cb2-537e2dba258c' -or $identity.Publisher -eq 'CN=qianbo') {
-    throw 'Package.appxmanifest 仍使用开发占位身份。先关联 Partner Center 的 Product identity，再生成商店包。'
+$identityPath = Join-Path $repoRoot 'windows/NetMaster.WinUI/StoreIdentity.json'
+if (!(Test-Path -LiteralPath $identityPath -PathType Leaf)) {
+    throw '尚未关联 Partner Center 的 Product identity：缺少 StoreIdentity.json。'
 }
+$storeIdentity = Get-Content -LiteralPath $identityPath -Raw | ConvertFrom-Json
+if ([string]::IsNullOrWhiteSpace($storeIdentity.Name) -or
+    [string]::IsNullOrWhiteSpace($storeIdentity.Publisher) -or
+    [string]::IsNullOrWhiteSpace($storeIdentity.PublisherDisplayName) -or
+    $storeIdentity.Name -eq '4e6619dc-7548-4e3f-8cb2-537e2dba258c' -or
+    $storeIdentity.Publisher -eq 'CN=qianbo') {
+    throw 'StoreIdentity.json 必须填写 Partner Center 的 Name、Publisher 和 PublisherDisplayName，不能使用开发占位值。'
+}
+[xml]$sourceManifest = Get-Content -LiteralPath $manifestPath -Raw
 $families = @($sourceManifest.Package.Dependencies.TargetDeviceFamily | ForEach-Object { $_.Name })
 if ($families.Count -ne 1 -or $families[0] -ne 'Windows.Desktop') {
     throw 'NetMaster 商店包必须仅声明 Windows.Desktop 设备家族。'
 }
+$sourceManifest.Package.Identity.Name = [string]$storeIdentity.Name
+$sourceManifest.Package.Identity.Publisher = [string]$storeIdentity.Publisher
+$sourceManifest.Package.Properties.PublisherDisplayName = [string]$storeIdentity.PublisherDisplayName
+$identity = $sourceManifest.Package.Identity
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
 if (!(Test-Path -LiteralPath $vswhere)) { throw '请安装 Visual Studio 的 WinUI 应用程序开发工作负载。' }
 $msbuild = & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
@@ -23,7 +35,10 @@ if (!$msbuild) { throw '找不到 Visual Studio MSBuild。' }
 $buildId = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
 $output = (Join-Path $repoRoot "windows/NetMaster.WinUI/bin/store-$Architecture/$buildId/") + [IO.Path]::DirectorySeparatorChar
 $packages = (Join-Path $repoRoot "windows/NetMaster.WinUI/bin/store-packages-$Architecture/$buildId/") + [IO.Path]::DirectorySeparatorChar
-& $msbuild $project /restore /nologo /v:minimal /p:Configuration=Release "/p:Platform=$Architecture" "/p:OutDir=$output" "/p:AppxPackageDir=$packages" /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false /p:AppxSymbolPackageEnabled=false /p:UapAppxPackageBuildMode=StoreUpload /p:AppxBundle=Never
+New-Item -ItemType Directory -Path $output -Force | Out-Null
+$storeManifestPath = Join-Path $output 'Package.Store.appxmanifest'
+$sourceManifest.Save($storeManifestPath)
+& $msbuild $project /restore /nologo /v:minimal /p:Configuration=Release "/p:Platform=$Architecture" "/p:OutDir=$output" "/p:AppxPackageDir=$packages" "/p:NetMasterStoreManifest=$storeManifestPath" /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false /p:AppxSymbolPackageEnabled=false /p:UapAppxPackageBuildMode=StoreUpload /p:AppxBundle=Never
 if ($LASTEXITCODE -ne 0) { throw "MSIX 打包失败，退出码 $LASTEXITCODE。" }
 $uploads = @(Get-ChildItem -LiteralPath $packages -Filter '*.msixupload' -Recurse -File)
 if ($uploads.Count -ne 1) { throw "本次构建应生成一个商店上传文件，实际为 $($uploads.Count) 个。" }

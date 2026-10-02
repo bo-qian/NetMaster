@@ -33,6 +33,9 @@
     <ProjectReference Include="../NetMaster.Core/NetMaster.Core.csproj" />
     <ProjectReference Include="../NetMaster.Worker/NetMaster.Worker.csproj" ReferenceOutputAssembly="false" />
     <Manifest Include="$(ApplicationManifest)" />
+    <!-- Store builds use an ignored generated manifest so the local development
+         package keeps its separate publisher and identity. -->
+    <AppxManifest Include="$(NetMasterStoreManifest)" Condition="'$(NetMasterStoreManifest)' != ''" />
   </ItemGroup>
   <Target Name="IncludeWorker" BeforeTargets="GetCopyToOutputDirectoryItems;_ComputeAppxPackagePayload" DependsOnTargets="ResolveProjectReferences">
     <!-- VS can run only the startup project. Build the worker explicitly before
