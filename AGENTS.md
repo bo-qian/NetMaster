@@ -4,8 +4,8 @@
 
 1. 阅读本文件、`docs/winui-handoff.md` 和 `docs/dev-log.md` 的最近记录。
 2. 检查 `git status --short --branch` 和实际项目文件，区分已经实现的功能与设计方案。
-3. WinUI 改版在 `feature/winui3-windows` 分支开发。保留现有 Python Windows 版与 Linux 版，测试完成后再由用户决定合并到 `main`。
-4. 换电脑接续前获取远端更新。工作区干净时可在该分支使用 `git pull --ff-only`；有未提交改动或分支分叉时先保留并处理这些改动，不要使用强制覆盖或丢弃来同步。
+3. 用户已决定将 WinUI 改版合并到 `main`，后续审核要求的修订直接在 `main` 开发。保留现有 Python Windows 版与 Linux 版。
+4. 换电脑接续前获取远端更新。工作区干净时可在 `main` 使用 `git pull --ff-only`；有未提交改动或分支分叉时先保留并处理这些改动，不要使用强制覆盖或丢弃来同步。
 
 ## 每轮对话都记录开发日志
 
@@ -62,8 +62,8 @@
 - 常规构建：`dotnet build windows/NetMaster.WinUI/NetMaster.WinUI.csproj -p:Platform=x64 -v:minimal`。当前实例占用输出文件时可指定单独的临时 `OutDir`，不要强行结束用户的调试会话。
 - 不提交 `.vs/`、`bin/`、`obj/`、用户设置、运行时凭证、日志或私有签名证书。
 - 使用仓库已有的用户 Git 身份，不附加助手署名或共同作者信息。
-- 每个完成的开发阶段可保存提交；准备换电脑时将已验证的阶段与交接文档推送到开发分支。未经用户指示不合并到 `main`，不改写已发布历史。
+- 每个完成的开发阶段可保存提交；准备换电脑时将已验证的阶段与交接文档推送到 `main`。不改写已发布历史；认证修订不自动创建 Release 或发布商店版本。
 
 ## 新电脑的第一条提示词
 
-> 请先阅读 AGENTS.md、docs/winui-handoff.md 和 docs/dev-log.md 的最新记录，检查 feature/winui3-windows 分支和实际代码，然后从交接文件里的下一步继续开发。每轮对话结束前更新开发日志。
+> 请先阅读 AGENTS.md、docs/winui-handoff.md 和 docs/dev-log.md 的最新记录，检查 main 分支和实际代码，然后从交接文件里的下一步继续开发。每轮对话结束前更新开发日志。
