@@ -1,5 +1,7 @@
 # NetMaster Windows 验证与发布
 
+**2026-10-03 认证结果：** Partner Center 产品总览显示 Submission 1“准备发布”，认证已通过，仍需点击“立即发布”才开始公开发布流程；该按钮未点击。认证包是下文记录的重命名前 `NetMaster.WinUI_2.0.0.0_x64`，不同于当前 `main` 的 `NetMaster.exe` 与数据迁移实现。当前新名称的开发 MSIX 已构建、验签，但尚未实际安装运行。建议先验收新构建，再备妥替换包、处理旧待发布提交并重新认证；旧提交暂不取消，公开发布与 GitHub Release 暂不执行。下文的“正在认证”表述保留为 2026-10-02 当时记录。
+
 **2026-10-02 重命名提示：** 当前源码项目与程序集已更名为 `windows/NetMaster/NetMaster.csproj`、`NetMaster.exe`，默认数据目录改为 `%LocalAppData%/NetMaster` 并迁移上一代 Windows 应用数据。x64 无包构建、Core 与网页脚本测试通过；独立自签名开发测试 MSIX 已生成并核查签名及包内文件，尚未安装运行。下面记载的已提交包路径与哈希是历史事实，仍属当前正在认证的旧包。新版须取得用户对实际运行的确认，再构建并验证新的 Store 包，才能替换送审包；商店 Name `BoQian.NetMaster`、Publisher 和已预留显示名不改。此时尚未替换包、认证未通过，也未手动发布。
 
 发布路线：Microsoft Store 的 MSIX。用户已在 Partner Center 建立 `NetMaster 校园网助手` 产品，并于 2026-10-02 确认当前开发版的本地验收没有问题。用户审阅 Submission 1 后明确授权送审；Partner Center 最近一次核对显示**正在认证**，提交步骤完成、预处理正在进行（4 步中的第 2 步）。用户另已决定立即合并 WinUI 源码，`feature/winui3-windows` 快进合并并推送到 `main`；后续审核修订在主线进行。正式商店发布仍设为手动，尚未公开上架或创建 GitHub Release。个人身份核验具体状态未独立检查。
