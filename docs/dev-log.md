@@ -635,3 +635,31 @@
 - 决定 / 改动：核对 Partner Center 产品总览显示“准备发布”，认证完成，页面有“取消认证”和“立即发布”；均未点击。认证对应重命名前的 2.0.0.0 包，与当前 `main` 的程序和数据路径不同。建议先对新名称的开发 MSIX 做实际运行及迁移验收，再备妥新商店包并处理旧待发布提交、重新认证，最后手动发布并核对安装入口，再创建 GitHub `v2.0.0` Release。更新 `docs/windows-handoff.md`、`docs/windows-release.md` 与两份 README 的发布状态。
 - 验证：Partner Center 页面实查认证状态；`main` 工作区起初干净，已有新名称自签名开发 MSIX；未安装运行新包、未构建正式替换包、未点击发布或取消认证。
 - 接续：完成新构建的本机安装与关键流程验收，再准备替换提交。不要把旧包认证通过视为新包已验证。
+
+### 2026-10-03 · 新版开发包安装与启动受阻
+
+- 需求 / 问题：用户要求安装、运行重命名后的新构建，亲自查看效果。
+- 决定 / 改动：核对自签名 `NetMaster.LocalDevelopment 1.0.0.38` 与现有 `.37`，原位安装 `.38`；安装成功但启动失败。为保持原有守护，随后使用此前保留的有效签名 `.37` MSIX 原位恢复并启动。没有改动配置内容或关闭 Smart App Control；同步更新 `docs/windows-handoff.md`。
+- 验证：`.38` 安装后包状态 Ok，但 AppModel-Runtime 207 `0x800711C7` 和 CodeIntegrity 3077/3033 记录 Smart App Control 拦截 `NetMaster.exe`，无新版 UI / Worker 进程，新数据目录尚无设置文件；`.37` 恢复后包状态 Ok，旧 UI 和 Worker 进程运行，旧设置文件仍在。用户随后称在本机任务管理器看到 `NetMaster.exe`；再次连续采样进程和启动事件，仍只有 `.37` 的 `NetMaster.WinUI.exe` 与 `NetMaster.Worker.exe`，没有新版进程。Windows Sandbox 不可用。新版安装成功不等于运行或迁移验收成功。
+- 接续：尝试在用户另一台 Windows 电脑预览新构建；待用户提供可访问方式。在新版实际验收前，不替换商店认证包、不手动发布。
+
+### 2026-10-03 · 查明新版与旧版的 Smart App Control 差异
+
+- 需求 / 问题：用户指出不能只换测试电脑，要求解释旧版能启动而新构建被拦截的原因，并提出可以先卸载旧版。
+- 决定 / 改动：对比两个开发包的包内二进制签名与哈希、CodeIntegrity 事件 XML 和本机证书。`.37` 与 `.38` 均使用相同 `CN=qianbo` 自签名开发证书；`.38` 的新 `NetMaster.exe` 文件哈希不同，事件 3077 明示 `VerifiedAndReputableDesktop` 策略签名级别不足（请求 3、验证 1）。`.38` 原位升级时系统仅注册 `.38`，因此不是旧版安装冲突；再卸载 `.37` 不会改变此判断。旧文件为何被放行的具体云端信誉结论本机无法读取，不能断言是源码错误或证书差异。未修改 Smart App Control 设置。
+- 验证：`.38` 包与主要二进制本机 Authenticode 有效；本机仅有该自签名开发证书，无受信任 CA 的代码签名私钥。直接以 `dotnet NetMaster.dll` 启动失败，Windows App Runtime 初始化报 `0x80040154`，未打开新版。对照微软官方 Smart App Control 签名与测试文档；当前 `.37` UI 和 Worker 仍运行、旧配置保留。
+- 接续：要在这台受保护主机预览新二进制，需取得受信任签名（例如单独受限的 Store 测试分发与认证），或准备同机隔离测试环境；这些方案尚未执行。当前不卸载正常守护版、不发布旧审核包。
+
+### 2026-10-03 · 准备同机 Sandbox 预览
+
+- 需求 / 问题：用户希望优先在本机看到新版，且不能只换电脑绕开 Smart App Control；提出可卸载旧版。
+- 决定 / 改动：确认 `.38` 升级时已替代 `.37`，冲突不是原因，旧版不卸载。准备忽略目录 `windows/NetMaster/bin/sandbox-preview/`：复制原 `.38` MSIX、开发证书公钥、x64 Windows App Runtime 依赖，写入隔离 Windows 的安装脚本与 `.wsb` 映射配置，不映射主机数据。未更改主机 Smart App Control、Windows 可选功能或商店状态。
+- 验证：MSIX 哈希与原件一致，PowerShell 脚本解析无错误、WSB XML 可解析；主机为 Windows 11 专业版且支持虚拟化，但当前没有 Windows Sandbox 可执行文件。隔离窗口尚未运行，新版仍未实际验收。
+- 接续：等待用户确认是否允许启用 Windows Sandbox 可选功能并按需重启；这会中断当前桌面工作。若启用成功，再在 Sandbox 中安装运行 `.38` 供用户预览；主机配置迁移另行验收。
+
+### 2026-10-03 · 启用 Windows Sandbox 等待重启
+
+- 需求 / 问题：用户同意在本机启用 Windows Sandbox，准备重启后预览新版。
+- 决定 / 改动：在 Git 忽略的预览目录准备管理员启用脚本，仅执行 `Enable-WindowsOptionalFeature`，未自动重启。主机旧开发版和配置未卸载或修改；更新 `docs/windows-handoff.md`。
+- 验证：管理员返回 `Succeeded=true`、功能 `Disabled → Enabled`、`RestartNeeded=true`；预览安装脚本语法和 WSB XML 已核查。尚未重启，Sandbox 和新版 `.38` 未启动，不能称已完成验收。
+- 接续：等待用户保存工作并决定重启时间。重启后启动 `windows/NetMaster/bin/sandbox-preview/NetMaster-preview.wsb`，观察依赖安装、应用启动及界面；主机数据迁移需另行验证。
