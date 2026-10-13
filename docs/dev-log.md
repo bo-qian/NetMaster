@@ -677,3 +677,4 @@
 - 决定 / 改动：在 Partner Center 取消旧 Submission 1 认证，重新打开草稿；首次上传当前构建 `2.0.0.0` 被服务器以同包全名不同内容拒绝。将 `tools/Build-StorePackage.ps1` 的商店版本改为 `2.0.1.0`，生成 `NetMaster_2.0.1.0_x64.msixupload`；同步 README、交接、发布与商店列表草稿及 GitHub Release 文案版本。Partner Center 预检通过后保存替换，原旧包从当前提交移除；核对免费、所有市场、IARC 3+、手动发布及 `runFullTrust` 说明后，重新提交 Submission 1 认证。
 - 验证：Core 78 项、门户脚本 11 项测试通过；新 x64 上传包的包内身份、版本、程序与后台文件核查通过。新包 `windows/NetMaster/bin/store-packages-x64/20261013-220052-c549e949/NetMaster_2.0.1.0_x64.msixupload` 为 75,753,119 字节，SHA-256 `0806A34E8CD56ACAD2924470D358958DFE1E6B0CC437E6C20B471640F8E308AE`。Partner Center 提交总览仅列 `NetMaster_2.0.1.0_x64.msixupload` 且显示 Validated；送审后产品总览显示“正在认证”，第 2/4 步“预处理”。这不等于认证通过或正式包已在主机运行。
 - 接续：等微软完成认证并处理反馈；通过后手动发布，验证商店安装入口和实际安装，再创建 GitHub `v2.0.1` Release。审核通过前不公开商店版本。
+- 仓库同步：发布准备的脚本与文档已提交为 `760bbd6` 并推送到 `origin/main`；未创建版本标签或 GitHub Release。
