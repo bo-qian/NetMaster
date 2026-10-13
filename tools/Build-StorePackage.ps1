@@ -27,7 +27,7 @@ if ($families.Count -ne 1 -or $families[0] -ne 'Windows.Desktop') {
 }
 $sourceManifest.Package.Identity.Name = [string]$storeIdentity.Name
 $sourceManifest.Package.Identity.Publisher = [string]$storeIdentity.Publisher
-$storeVersion = '2.0.0.0'
+$storeVersion = '2.0.1.0'
 $sourceManifest.Package.Identity.Version = $storeVersion
 $sourceManifest.Package.Properties.PublisherDisplayName = [string]$storeIdentity.PublisherDisplayName
 $sourceManifest.Package.Properties.DisplayName = [string]$storeIdentity.DisplayName

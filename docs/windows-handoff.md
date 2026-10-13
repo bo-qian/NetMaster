@@ -1,22 +1,26 @@
 # NetMaster Windows 开发交接
 
-最后更新：2026-10-03（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
+最后更新：2026-10-13（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
 
-**认证结果（2026-10-03）：** 已在 Partner Center 产品总览核对：Submission 1 显示“准备发布”，认证通过，页面提供“取消认证”和“立即发布”；手动发布尚未执行，商店未公开。该认证对应重命名前的 `NetMaster.WinUI_2.0.0.0_x64` 包，当前 `main` 的 `NetMaster.exe`、数据目录迁移及新独立开发测试 MSIX 尚未实际安装运行验收。保持待发布状态，先验收新构建；若首发采用当前源码，再处理旧待发布提交并以新包重新认证。操作“取消认证”前先备齐并核查新包；不要把旧包认证通过视作新包验收通过。GitHub `v2.0.0` 标签及 Release 尚未创建。
+**2026-10-13 重新认证进展：** 用户明确选择先让当前 `main` 构建重新认证，不发布此前已认证的旧 `NetMaster.WinUI` 包。相同包身份和版本 `2.0.0.0` 的当前构建被预检拒绝，因为与旧包内容不同；用户决定当前构建改用 **v2.0.1** 首发。新的 x64 Store 上传包 `NetMaster_2.0.1.0_x64.msixupload` 已构建、通过包内核查和 Partner Center 预检，旧包已从当前提交移除。Submission 1 已重新提交，产品总览显示“正在认证”，第 2/4 步“预处理”；“审核通过后手动发布”选项保留。商店仍未公开，GitHub Release 未创建。新包路径及哈希见本轮开发日志。
+
+**2026-10-03 同机隔离运行结果：** 重启后 Windows Sandbox 已正常运行；首次仅把开发公钥导入 Sandbox 当前用户 TrustedPeople，MSIX 安装因 `0x800B0109` 未受信任的证书链失败。补充导入 Sandbox LocalMachine TrustedPeople 后，自动脚本报告 `NetMaster.LocalDevelopment 1.0.0.38` 安装成功；实际截图可见新版 `NetMaster.exe` 的概览页，显示“未配置”，三页导航与测速卡可见。用户尚未明确目测确认此构建的完整功能。Sandbox 无主机 DPAPI 凭证，不能证明主机旧数据迁移、真实校园网认证或守护运行。主机保留旧 `.37` 和原配置，Smart App Control 未关闭。
+
+**认证历史（2026-10-03）：** Submission 1 曾显示“准备发布”，认证通过但未手动发布；它对应重命名前的 `NetMaster.WinUI_2.0.0.0_x64` 包。2026-10-13 用户选择当前源码重新认证，旧认证已取消。不要把旧包认证结果套用于当前包。GitHub `v2.0.1` 标签及 Release 尚未创建。
 
 **新构建本机安装尝试（2026-10-03）：** 用户要求安装并打开新版供验收。签名有效的独立测试 MSIX `NetMaster.LocalDevelopment 1.0.0.38` 原位安装成功，`Get-AppxPackage` 为 Ok；但首次启动时 AppModel-Runtime 207 返回 `0x800711C7`，CodeIntegrity 3077/3033 明确记录 Smart App Control 拦截新包 `NetMaster.exe`。新 UI / Worker 均未启动，旧 `%LocalAppData%/NetMaster/WinUI/data/settings.json` 存在，新 `%LocalAppData%/NetMaster/data/settings.json` 尚不存在，故**未验证迁移或新版运行**。已用此前签名有效的测试 MSIX 原位恢复 `1.0.0.37`，重新启动后旧 `NetMaster.WinUI.exe` 与 `NetMaster.Worker.exe` 进程均来自 `.37` 安装目录；旧配置仍在。Windows Sandbox 可执行文件不存在，本机无可用 Hyper-V 管理命令。用户希望优先在本机预览并要求解决拦截根因；不要要求关闭 Smart App Control，当前本机窗口若可见仍是旧 `.37`。
 
 **Smart App Control 根因核查：** `.37` 与 `.38` 容器及主要程序均用同一张 `CN=qianbo` 本机自签名证书；`.38` 的包、`NetMaster.exe` 和 DLL 都通过本机 Authenticode 检查，但 CodeIntegrity 3077 的实际策略为 `VerifiedAndReputableDesktop`，对新 `NetMaster.exe` 请求签名级别 3、仅验证到 1，拒绝文件哈希。旧 `.37` 此刻可运行且未出现对应拦截事件，具体云端信誉判定本机日志不可见，不能把“旧版已运行”归因于证书足够可信。微软要求 Smart App Control 新代码使用受信任提供者签名或达到其信誉判断；本机仅有上述开发自签证书。`.38` 升级时已替代 `.37`，当时没有两个版本安装冲突，单独卸载旧版不能修复拦截。直接以 `dotnet NetMaster.dll` 启动又因缺少打包身份下的 Windows App Runtime 注册返回 `0x80040154`，也不是有效预览。需要可信签名（如 Store 的受限测试分发，须另行准备并审核）或隔离开发环境；不得为了预览直接关闭主机 Smart App Control。此前“换电脑”只是绕开环境，不能代替这一诊断。
 
-**同机隔离预览准备：** 已在 Git 忽略的 `windows/NetMaster/bin/sandbox-preview/` 备好原始 `.38` MSIX、公钥开发证书、x64 Windows App Runtime 依赖、Sandbox 映射配置和自动安装脚本；MSIX SHA-256 与原件一致，脚本无语法错误，WSB XML 可解析。用户同意启用 Windows Sandbox，管理员命令返回成功，功能从 Disabled 变为 Enabled，`RestartNeeded=true`。**尚未重启或运行 Sandbox / 新版应用**；重启后从该目录的 `NetMaster-preview.wsb` 启动隔离预览，先验证安装和启动结果。主机当前旧 `.37` 守护仍保留。Sandbox 只用于界面 / 部分功能预览，不能读取主机 DPAPI 凭证，不能替代主机迁移或守护验收。
+**同机隔离预览：** Git 忽略的 `windows/NetMaster/bin/sandbox-preview/` 保留 `.38` MSIX、公钥开发证书、Windows App Runtime 依赖、Sandbox 映射配置与安装脚本；诊断输出位于相邻忽略目录。Windows Sandbox 已启用并在 2026-10-03 实际打开新版概览。测试证书只导入 Sandbox 的 TrustedPeople，主机 Smart App Control 不变。该隔离验证不能替代主机迁移或守护验收。
 
-**当前重命名工作（2026-10-02）：** 用户已要求当前 Windows 应用成为默认版，项目目录 / 程序集从 `NetMaster.WinUI` 改为 `NetMaster`，默认数据目录从 `%LocalAppData%/NetMaster/WinUI` 改为 `%LocalAppData%/NetMaster`，自定义保存位置的子目录从 `NetMaster-WinUI` 改为 `NetMaster`。主窗口或无窗口后台首次启动时只迁移此前这一代 Windows 应用的配置与日志并保留原副本，不碰 Python 旧版的 Roaming 数据；旧登录启动任务迁到新名称。Core 78 项、网页脚本 11 项通过，重命名后 x64 无包构建 0 警告 / 错误；新名称的独立自签名开发测试 MSIX 已生成并核查签名及五个程序文件，尚未安装或实际运行。当前微软送审的 2.0.0.0 包是在重命名前生成的，**与现有源码不一致**；新包完成构建、包内验证及用户验收后才可考虑替换审核包。商店分配的 `BoQian.NetMaster` 身份及发布显示名不变。不能把此前已安装开发版的验收套用到新二进制。
+**重命名工作历史（2026-10-02，后续状态以上文为准）：** 用户已要求当前 Windows 应用成为默认版，项目目录 / 程序集从 `NetMaster.WinUI` 改为 `NetMaster`，默认数据目录从 `%LocalAppData%/NetMaster/WinUI` 改为 `%LocalAppData%/NetMaster`，自定义保存位置的子目录从 `NetMaster-WinUI` 改为 `NetMaster`。主窗口或无窗口后台首次启动时只迁移此前这一代 Windows 应用的配置与日志并保留原副本，不碰 Python 旧版的 Roaming 数据；旧登录启动任务迁到新名称。Core 78 项、网页脚本 11 项通过，重命名后 x64 无包构建 0 警告 / 错误；新名称的独立自签名开发测试 MSIX 当时已生成并核查签名及五个程序文件，随后在 Windows Sandbox 内实际打开。2026-10-02 送审的 2.0.0.0 包是在重命名前生成的，**与现有源码不一致**；该旧认证已于 2026-10-13 取消并由新包重新送审。商店分配的 `BoQian.NetMaster` 身份及发布显示名不变。不能把此前已安装开发版的验收套用到新二进制。
 
-**正式首发版本（2026-10-02）：** 用户确定 WinUI 重构版对外从 **v2.0.0** 开始，以区别 Python 旧版 1.0.0。商店包版本为 **2.0.0.0**，GitHub Release 标签计划为 **v2.0.0**。修正后的 x64 商店上传包已通过 Partner Center 包预检；未在本机安装或运行该版本。源码开发 manifest 和本机 `NetMaster.LocalDevelopment 1.0.0.37` 不改。
+**首发版本原决定（2026-10-02，已被 2026-10-13 的 v2.0.1 决定取代）：** 用户确定 WinUI 重构版对外从 **v2.0.0** 开始，以区别 Python 旧版 1.0.0。商店包版本为 **2.0.0.0**，GitHub Release 标签计划为 **v2.0.0**。修正后的 x64 商店上传包已通过 Partner Center 包预检；未在本机安装或运行该版本。源码开发 manifest 和本机 `NetMaster.LocalDevelopment 1.0.0.37` 不改。
 
-**Submission 1 历史与当前状态：** 用户已在本机查看 `NetMaster.LocalDevelopment 1.0.0.37` 并确认可以进入发布准备；真实断网恢复、登录后自启、升级 / 卸载以及新构建后台组件在本机 Smart App Control 下运行仍无独立现场证据。2026-10-02 送审的是修正过安装显示名并通过包预检的旧命名 x64 `2.0.0.0`；商店资料为免费、全球所有市场、审核通过后手动发布，含简中 / 英语列表、真实日志截图、IARC 全球 3+、隐私和受限校园网络认证说明。2026-10-03 实查认证通过并进入“准备发布”，但尚未手动发布。已写 [Release 文案草稿](release-notes-v2.0.0-draft.md)。商店尚未公开，候选包未在本机安装运行。候选包路径、SHA-256 与风险详见 [发布说明](windows-release.md)。
+**Submission 1 早期记录（最新状态以上文为准）：** 用户已在本机查看 `NetMaster.LocalDevelopment 1.0.0.37` 并确认可以进入发布准备；真实断网恢复、登录后自启、升级 / 卸载以及新构建后台组件在本机 Smart App Control 下运行仍无独立现场证据。2026-10-02 送审的是修正过安装显示名并通过包预检的旧命名 x64 `2.0.0.0`；商店资料为免费、全球所有市场、审核通过后手动发布，含简中 / 英语列表、真实日志截图、IARC 全球 3+、隐私和受限校园网络认证说明。2026-10-03 实查认证通过并进入“准备发布”，但尚未手动发布。已写 [Release 文案草稿](release-notes-v2.0.1-draft.md)。商店尚未公开，候选包未在本机安装运行。候选包路径、SHA-256 与风险详见 [发布说明](windows-release.md)。
 
-**GitHub 同步顺序：** 用户于 2026-10-02 明确要求立即合并，`feature/winui3-windows` 已快进合并并推送到 `main`（合并后指向 `a7100c6`）。后续审核要求的修订直接在 `main` 进行；旧 Python Windows 版仍在 `windows/legacy/`，Linux 版保留。`v2.0.0` 标签与 GitHub Release 尚未创建。微软认证通过后仍由用户决定手动发布；待商店安装入口实际可用，再从最终发布提交创建 `v2.0.0` Release。不能把未签名的 `.msixupload` 当成 GitHub 可安装附件。CI 已加入 `main` push 触发，但远端本次运行结果另行核实。
+**GitHub 同步顺序：** 用户于 2026-10-02 明确要求立即合并，`feature/winui3-windows` 已快进合并并推送到 `main`（合并后指向 `a7100c6`）。后续审核要求的修订直接在 `main` 进行；旧 Python Windows 版仍在 `windows/legacy/`，Linux 版保留。`v2.0.1` 标签与 GitHub Release 尚未创建。微软认证通过后仍由用户决定手动发布；待商店安装入口实际可用，再从最终发布提交创建 `v2.0.1` Release。不能把未签名的 `.msixupload` 当成 GitHub 可安装附件。CI 已加入 `main` push 触发，但远端本次运行结果另行核实。
 
 **Visual Studio F5 构建修复（2026-10-02）：** 用户按 F5 后 WinUI 复制阶段找不到 `NetMaster.Worker` 的 runtimeconfig、apphost 和 deps 输出；当时 `Worker/bin/Debug/.../win-x64` 未生成。`NetMaster.WinUI.csproj` 的 `IncludeWorker` 现显式构建 Worker 后再取得路径并复制，覆盖 VS 仅构建启动项目而未先产生 Worker 文件的情况。模拟 `BuildProjectReferences=false` 且先清理 Worker 输出时，目标可重新生成文件；WinUI x64 常规构建 0 错误。**未重新执行 Visual Studio F5 的部署 / 调试全过程**，新构建后台组件仍可能被本机 Smart App Control 拦截。本机已安装的 `NetMaster.LocalDevelopment 1.0.0.37` 保持 Status=Ok，重新启动后 UI 与 Worker 进程均来自该安装目录；继续以此作为用户验收入口。
 
@@ -24,7 +28,7 @@
 
 **注册与签名：** 用户已能在 Partner Center 建立产品并提交认证；个人身份核验的具体状态未独立检查。Store 在审核后为 MSIX 重新签名，不向开发者交付可用于 GitHub 站外包的签名私钥。`.p12` / `.pfx` 只是可能含证书和私钥的文件格式，来源不明的转售文件不能当作本人的可信代码签名；不为此购买。本机自签名测试证书不得用于正式公开分发；若以后提供离线直装 MSIX，需要单独的可信站外签名。详见 [发布说明](windows-release.md)。
 
-**新版使用说明：** 根 `README.md` 是版本入口，`windows/README.md` 是当前 Windows 应用面向用户的使用指南，只说明首次配置、联网与守护、测速、日志、更换账号、设置及数据区别，不放 Visual Studio / `dotnet` 源码构建步骤。历史 Python 版仍由 `windows/legacy/README.md` 单独说明。两份 README 已标注 v2.0.0 认证中，正式安装链接等上架后补入。
+**新版使用说明：** 根 `README.md` 是版本入口，`windows/README.md` 是当前 Windows 应用面向用户的使用指南，只说明首次配置、联网与守护、测速、日志、更换账号、设置及数据区别，不放 Visual Studio / `dotnet` 源码构建步骤。历史 Python 版仍由 `windows/legacy/README.md` 单独说明。两份 README 已标注 v2.0.1 正在认证，正式安装链接等上架后补入。
 
 **仓库目录（本轮整理）：** `windows/` 现在是 WinUI 发布主线入口，包含 `NetMaster.WinUI/`、`NetMaster.Worker/`、`NetMaster.Core/` 和测试；原 Python Windows 版的六个文件已整体移到 `windows/legacy/`，其 README 单独保留。根 README 与 `windows/README.md` 已改为主线介绍，历史 Release 的 `NetMaster.exe` 标为 Python 旧版；Linux 目录不变。WinUI 与旧版仍使用独立数据，目录整理没有安装、升级或迁移用户配置。WinUI x64 构建、Core 75 项及网页脚本 11 项通过，旧版 Python 因此机无 Python 解释器未做启动测试。`docs/dev-log.md` 的历史记录保留原路径作为当时事实，不批量改写。
 

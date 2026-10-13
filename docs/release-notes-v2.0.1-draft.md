@@ -1,8 +1,8 @@
-# NetMaster v2.0.0 · GitHub Release 文案草稿
+# NetMaster v2.0.1 · GitHub Release 文案草稿
 
 > 仅供 Microsoft Store 正式发布后使用。目前商店版本正在认证，本文不是已经发布的下载入口。
 
-NetMaster 2.0.0 是面向上海大学校园网用户的全新 Windows 版本。旧版 Python 程序仍保留在仓库中；当前版本不自动读取或迁移旧版的登录配置与日志。
+NetMaster 2.0.1 是面向上海大学校园网用户的全新 Windows 版本。旧版 Python 程序仍保留在仓库中；当前版本不自动读取或迁移旧版的登录配置与日志。
 
 首次使用时，在应用的“配置”页完成校园网登录、验证并保存登录信息。之后可分别查看当前联网状态和后台守护状态；启用自动重连后，软件会在需要时尝试恢复校园网认证。概览页提供主动测速，日志页支持搜索、筛选、详情和导出。界面支持浅色、深色与跟随系统主题。
 
@@ -14,4 +14,5 @@ Microsoft Store 上架后在此补入经实际访问验证的正式安装链接�
 
 如遇问题，请到 [Issues](https://github.com/bo-qian/NetMaster/issues) 反馈；分享日志前请检查其中的账号和网络信息。NetMaster 是个人开发项目，并非上海大学或 Microsoft 的官方软件。
 
-发布前核对：商店认证通过；用户手动发布；实际安装链接可访问；确认标题 / 版本为 v2.0.0；再创建 GitHub Release。不附未签名的 MSIX / msixupload。
+发布前核对：商店认证通过；用户手动发布；实际安装链接可访问；确认标题 / 版本为 v2.0.1；再创建 GitHub Release。不附未签名的 MSIX / msixupload。
+

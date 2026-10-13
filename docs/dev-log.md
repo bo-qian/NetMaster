@@ -663,3 +663,17 @@
 - 决定 / 改动：在 Git 忽略的预览目录准备管理员启用脚本，仅执行 `Enable-WindowsOptionalFeature`，未自动重启。主机旧开发版和配置未卸载或修改；更新 `docs/windows-handoff.md`。
 - 验证：管理员返回 `Succeeded=true`、功能 `Disabled → Enabled`、`RestartNeeded=true`；预览安装脚本语法和 WSB XML 已核查。尚未重启，Sandbox 和新版 `.38` 未启动，不能称已完成验收。
 - 接续：等待用户保存工作并决定重启时间。重启后启动 `windows/NetMaster/bin/sandbox-preview/NetMaster-preview.wsb`，观察依赖安装、应用启动及界面；主机数据迁移需另行验证。
+
+### 2026-10-03 · 同机 Sandbox 实际预览（补记）
+
+- 需求 / 问题：重启后继续在本机隔离环境运行新名称构建，确认 Smart App Control 拦截是否仅发生在主机。
+- 决定 / 改动：启动 Windows Sandbox，使用已准备的映射素材安装 `NetMaster.LocalDevelopment 1.0.0.38`；主机旧 `.37`、配置与 Smart App Control 保持不变。
+- 验证：首次仅向 Sandbox 当前用户 TrustedPeople 导入开发证书时安装因 `0x800B0109` 失败；补充导入隔离系统 LocalMachine TrustedPeople 后安装脚本成功，实际截图可见 `NetMaster.exe` 概览及三页导航，显示未配置。仅验证隔离环境启动和界面；未验证主机数据迁移、真实校园网认证、后台守护或用户完整目测验收。
+- 接续：正式商店包仍须与当前源码一致并重新认证；主机对自签名新程序的 Smart App Control 拦截仍在。
+
+### 2026-10-13 · 当前构建改以 v2.0.1 重新认证
+
+- 需求 / 问题：用户请求推进发布，明确不发布此前已认证的旧构建，选择当前 `main` 构建重新认证；相同 `2.0.0.0` 包全名出现内容冲突后，决定当前构建以 v2.0.1 首发。
+- 决定 / 改动：在 Partner Center 取消旧 Submission 1 认证，重新打开草稿；首次上传当前构建 `2.0.0.0` 被服务器以同包全名不同内容拒绝。将 `tools/Build-StorePackage.ps1` 的商店版本改为 `2.0.1.0`，生成 `NetMaster_2.0.1.0_x64.msixupload`；同步 README、交接、发布与商店列表草稿及 GitHub Release 文案版本。Partner Center 预检通过后保存替换，原旧包从当前提交移除；核对免费、所有市场、IARC 3+、手动发布及 `runFullTrust` 说明后，重新提交 Submission 1 认证。
+- 验证：Core 78 项、门户脚本 11 项测试通过；新 x64 上传包的包内身份、版本、程序与后台文件核查通过。新包 `windows/NetMaster/bin/store-packages-x64/20261013-220052-c549e949/NetMaster_2.0.1.0_x64.msixupload` 为 75,753,119 字节，SHA-256 `0806A34E8CD56ACAD2924470D358958DFE1E6B0CC437E6C20B471640F8E308AE`。Partner Center 提交总览仅列 `NetMaster_2.0.1.0_x64.msixupload` 且显示 Validated；送审后产品总览显示“正在认证”，第 2/4 步“预处理”。这不等于认证通过或正式包已在主机运行。
+- 接续：等微软完成认证并处理反馈；通过后手动发布，验证商店安装入口和实际安装，再创建 GitHub `v2.0.1` Release。审核通过前不公开商店版本。
