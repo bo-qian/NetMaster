@@ -8,11 +8,11 @@ Windows 版提供校园网登录信息配置、断线自动恢复、登录后启
 
 | 版本 | 说明 | 状态 |
 | --- | --- | --- |
-| [Windows 版](windows/README.md) | 配置校园网、查看连接与守护状态、测速、查阅日志 | v2.0.1 首发重新认证中，尚未公开上架 |
+| [Windows 版](windows/README.md) | 配置校园网、查看连接与守护状态、测速、查阅日志 | v2.0.1 认证通过、正在发布，公开入口尚待验证 |
 | [Windows 旧版](windows/legacy/README.md) | Python 版本的使用说明 | 保留供旧用户参考 |
 | [Linux 版](linux/README.md) | systemd 守护与终端界面 | 独立维护 |
 
-Windows 新版不会自动导入 Python 旧版的登录信息或日志，切换时需要重新配置。此前通过认证的 v2.0.0 旧构建已撤回；当前构建 v2.0.1 已重新提交认证，尚无公开的新版安装入口。仓库历史 Release 中的 `NetMaster.exe` 属于 Python 旧版，下载时请核对版本说明。
+Windows 新版不会自动导入 Python 旧版的登录信息或日志，切换时需要重新配置。此前通过认证的 v2.0.0 旧构建已撤回；当前构建 v2.0.1 已通过认证，正在由 Microsoft Store 发布，公开安装入口尚待验证。仓库历史 Release 中的 `NetMaster.exe` 属于 Python 旧版，下载时请核对版本说明。
 
 ## Star History
 

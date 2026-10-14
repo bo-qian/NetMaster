@@ -1,6 +1,8 @@
 # NetMaster Windows 开发交接
 
-最后更新：2026-10-13（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
+最后更新：2026-10-15（Asia/Shanghai）。每轮交流见 [开发日志](dev-log.md)，执行规则见仓库根目录 [AGENTS.md](../AGENTS.md)。
+
+**2026-10-15 当前发布状态：** 用户已在 Partner Center 对 v2.0.1 点击手动发布。产品总览确认认证通过，状态“正在发布”，进度第 4/4 步“发布”进行中。公开商店地址 `https://apps.microsoft.com/detail/9NWH2S2M5V80` 在中国大陆区域检查时仍返回“找不到产品”；尚不能称已公开可安装。等待微软发布完成并验证实际商店页面、安装及启动后，再补正式下载链接并创建 GitHub `v2.0.1` Release；本轮未创建标签或 Release。
 
 **2026-10-13 重新认证进展：** 用户明确选择先让当前 `main` 构建重新认证，不发布此前已认证的旧 `NetMaster.WinUI` 包。相同包身份和版本 `2.0.0.0` 的当前构建被预检拒绝，因为与旧包内容不同；用户决定当前构建改用 **v2.0.1** 首发。新的 x64 Store 上传包 `NetMaster_2.0.1.0_x64.msixupload` 已构建、通过包内核查和 Partner Center 预检，旧包已从当前提交移除。Submission 1 已重新提交，产品总览显示“正在认证”，第 2/4 步“预处理”；“审核通过后手动发布”选项保留。商店仍未公开，GitHub Release 未创建。新包路径及哈希见本轮开发日志。
 
